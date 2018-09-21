@@ -57,11 +57,17 @@ p_ij = n_ij/nCards
 
 Finally, let's move from mutual probabilities to relative probabilities. That is, let's assume that card i can be found in drafted hands with probability p_i = n_i/nCards , and similar probability for card j is denoted as p_j. Then, if the cards are drafted independently from each other (that is, if the player doesn't care about the presence of card i in their hand, while drafting card j, and vice versa), then we'll have p_ij = p_i * p_j
 
-In practice some cards are of course drafted together more often, and so p_ij > p_i * p_j, while some cards are drafted together more rarely. We can calculate this coefficient with  the following formula:
+In practice some cards are of course drafted together more often, and so p_ij > p_i * p_j, while some cards are drafted together more rarely. We can quantify this preference (or anti-prefereence) as a coefficient a, with  the following formula:
 
-k_ij = p_ij/(p_i * p_j) = n_ij/nCards / (n_i * n_j / nCards^2) = n_ij/n_i/n_j*nCards
+a_ij = p_ij/(p_i * p_j)
 
-In practice I got lazy and omitted this nCards term at the end, as I knew that I'll be normalizing these values at my next step:
+In practice I tracked the number (not probability) that each pair of cards ended up in the same pile n_ij, as well as the number of times card i was present in the final pile n_i , and the same for card j: n_j. If a card was present in the final pile twice, it was accounted twice, both in the n_ij and in n_i. For these counts, in case of independence, we can expect
+
+n_ij/nDrafts = n_i/nDrafts * n_j/Drafts * pileSize*(pileSize-1), 
+
+where pileSize = 14*3 and so
+
+k_ij = n_ij/(n_i * n_j) * nDrafts * 14*3
 
 
 ```{r}
@@ -69,7 +75,7 @@ nCards <- nrow(db)                 # Repeat, in case the data was reloaded
 p <- pairs                         # Make a copy
 for(jCard in 1:nCards) {
     for(iCard in 1:jCard) {
-      p[iCard,jCard] <- p[iCard,jCard]/(freq[iCard]*freq[jCard])*nCards
+      p[iCard,jCard] <- p[iCard,jCard]/(freq[iCard]*freq[jCard])*nDrafts*14*3
       p[jCard,iCard] <- p[iCard,jCard]
     }
 }
@@ -82,3 +88,20 @@ Now if we look at this matrix, it will look different:
 image(p,axes=F,col = grey(seq(0, 1, length = 256)))
 ```
 
+What is the highest synergy, if calculated that way? 
+
+```{r}
+max(p)
+```
+
+And which pair of cards turned to be the most "synergistic"?
+
+```{r}
+ij <- which(p == max(p), arr.ind = TRUE)
+db[ij[1],1]
+```
+```{r}
+db[ij[2],1]
+```
+
+Curiously, it's a synergy of Elvish Clancaller with itself. The card is not surprizing, it's an elf lord after all, but it is curious that with this calculation, rares clearly have an edge over commons and non-commons, as while nobody would ever pass over two cool synergistic rares, drafted in two consecutive boosters, people would sometimes pass over a synergistic common or uncommon.
