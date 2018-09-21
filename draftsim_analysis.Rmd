@@ -105,3 +105,5 @@ db[ij[2],1]
 ```
 
 Curiously, it's a synergy of Elvish Clancaller with itself. The card is not surprizing, it's an elf lord after all, but it is curious that with this calculation, rares clearly have an edge over commons and non-commons, as while nobody would ever pass over two cool synergistic rares, drafted in two consecutive boosters, people would sometimes pass over a synergistic common or uncommon.
+
+In case you are curious, the second most synergistic pair in this set is a combo of "blanchwood_armor" with "druid_of_horns" (a cool enchantment and a cool creature that benefits from enchantments) that have a relative preference of 71.33 .
