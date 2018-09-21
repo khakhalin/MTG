@@ -1,0 +1,84 @@
+---
+title: "Draftsim analysis"
+output: html_notebook
+---
+
+Some R code to analyze Draftsim drafting results.
+
+```{r}
+require(dplyr)
+require(ggplot2)
+require(tidyr)
+require(rgl)
+require(car)
+require(magick)
+load("C:/Users/Sysadmin/Documents/draftsim/pairs variable M19 part 1 v3.RData")
+```
+
+Here we load 4 datasets:
+
+* db - info about every card from this particular set
+* pairs - a matrix of all card co-occurrences in different drafts
+* freq - the total number of times each card was drafted
+* guilds - a matrix of color preferences during drafts
+
+First leat's look at the 'db' dataset:
+
+```{r}
+names(db)
+```
+
+As you can see, here we have some basic info about every card. Two most important fields for us are the name, and the casting cost.
+
+The WUBRG fields in the db data file were created from "cost" field using the following command:
+
+```{r}
+db <- mutate(db,w = grepl("W",cost)*1,
+                u = grepl("U",cost)*1,
+                b = grepl("B",cost)*1,
+                r = grepl("R",cost)*1,
+                g = grepl("G",cost)*1) # Number of symbols for each mana in cost
+```
+
+Here's the overall look of this dataset:
+
+```{r}
+head(db)
+```
+
+Another dataset here is called "pairs", and it contains info about every co-occurrence of every two cards in the final draft piles. That is, if somebody drafted cards i and j together once, the ij element of this matrix will be equal to 1. If it was co-drafted 100 times, it will be equal to 100. Here's how it looks like right after it was built by the loop running through all draft results:
+
+```{r}
+image(pairs,axes=F,col = grey(seq(0, 1, length = 256)))
+```
+The first thing we need to do now is to normalize this matrix, and also make it symmetrical. So first let's make a copy of "pairs" variable, just in case. Then let's move from relative numbers to probabilities:
+
+p_ij = n_ij/nCards
+
+Finally, let's move from mutual probabilities to relative probabilities. That is, let's assume that card i can be found in drafted hands with probability p_i = n_i/nCards , and similar probability for card j is denoted as p_j. Then, if the cards are drafted independently from each other (that is, if the player doesn't care about the presence of card i in their hand, while drafting card j, and vice versa), then we'll have p_ij = p_i * p_j
+
+In practice some cards are of course drafted together more often, and so p_ij > p_i * p_j, while some cards are drafted together more rarely. We can calculate this coefficient with  the following formula:
+
+k_ij = p_ij/(p_i * p_j) = n_ij/nCards / (n_i * n_j / nCards^2) = n_ij/n_i/n_j*nCards
+
+In practice I got lazy and omitted this nCards term at the end, as I knew that I'll be normalizing these values at my next step:
+
+
+```{r}
+nCards <- nrow(db)                 # Repeat, in case the data was reloaded
+p <- pairs                         # Make a copy
+for(jCard in 1:nCards) {
+    for(iCard in 1:jCard) {
+      p[iCard,jCard] <- p[iCard,jCard]/(freq[iCard]*freq[jCard])
+      p[jCard,iCard] <- p[iCard,jCard]
+    }
+}
+
+```
+
+Now if we look at this matrix, it will look different:
+
+```{r}
+image(p,axes=F,col = grey(seq(0, 1, length = 256)))
+```
+
