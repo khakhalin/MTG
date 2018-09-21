@@ -1,7 +1,5 @@
 ==MTG==
 
-First attempt in making a file.
+Analysis of draftsim drafts (incomplete):
 
-More changes.
-
-Even more changes.
+[current version](draftsim_analysis.nb)
