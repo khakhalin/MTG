@@ -69,7 +69,7 @@ nCards <- nrow(db)                 # Repeat, in case the data was reloaded
 p <- pairs                         # Make a copy
 for(jCard in 1:nCards) {
     for(iCard in 1:jCard) {
-      p[iCard,jCard] <- p[iCard,jCard]/(freq[iCard]*freq[jCard])
+      p[iCard,jCard] <- p[iCard,jCard]/(freq[iCard]*freq[jCard])*nCards
       p[jCard,iCard] <- p[iCard,jCard]
     }
 }
