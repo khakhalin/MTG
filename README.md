@@ -1,7 +1,7 @@
 Fun analyses of Magic the Gathering data
 ========================================
 
-# Drafts from Draftsim
+## Drafts from Draftsim
 
 In 2018 I was lucky to get access to drafting logs from [Draftsim.com](http://draftsim.com) website, and had an opportunity to play with this data in R. Together, we are trying to write up these analysis as a series of blog posts. As of Sep 2018 we had 2 posts:
 
