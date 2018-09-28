@@ -15,22 +15,23 @@ require(magick)
 load("C:/Users/Sysadmin/Documents/draftsim/pairs variable M19 part 1 v3.RData")
 ```
 
-Here we load 4 datasets:
+Let me start with describing the data; the exact structure of this data is not that important for the analysis, below, but I will be referring to it, so we can as well describe it. This data comes from the analysis of 48137 drafts that users ran on draftsim web-site (http://draftsim.com) in August 2018. I then loaded this data in R, and wrote a simple code that went through final draft piles one by one, and calculate the total number of cases that every two cards from the set (i and j) were drafted together:
+
+* pairs - a matrix of all card co-occurrences in different drafts
+
+To make calculations simpler, I also counted the total number of times each card was drafted at all:
+
+* freq - the total number of times each card was drafted
+
+To visualize the cards nicely I also loaded a database that for each card stores some useful information about it:
 
 * db - info about every card from this particular set
-* pairs - a matrix of all card co-occurrences in different drafts
-* freq - the total number of times each card was drafted
-* guilds - a matrix of color preferences during drafts
-
-First leat's look at the 'db' dataset:
 
 ```{r}
 names(db)
 ```
 
-As you can see, here we have some basic info about every card. Two most important fields for us are the name, and the casting cost.
-
-The WUBRG fields in the db data file were created from "cost" field using the following command:
+The fields that are important here are the id, the name, and the casting cost. All names I turned lowercase, replaced spaces with underscores, and purged commas, to make analysis easier. And the "cost" field I split into separate costs of each mana (WUBRG) using this command below. This was important, to classify cards into colors and guilds:
 
 ```{r}
 db <- mutate(db,w = grepl("W",cost)*1,
@@ -40,18 +41,46 @@ db <- mutate(db,w = grepl("W",cost)*1,
                 g = grepl("G",cost)*1) # Number of symbols for each mana in cost
 ```
 
-Here's the overall look of this dataset:
+All other fields may be ignored.
 
-```{r}
-head(db)
-```
-
-Another dataset here is called "pairs", and it contains info about every co-occurrence of every two cards in the final draft piles. That is, if somebody drafted cards i and j together once, the ij element of this matrix will be equal to 1. If it was co-drafted 100 times, it will be equal to 100. Here's how it looks like right after it was built by the loop running through all draft results:
+So, let's look at the "pairs" matrix. Again, it contains the data about every co-occurrence of every two cards in thefinal draft piles. That is, if out of entire 48137 drafts, cards i and j were drafted together only once, the ij element of this matrix will be equal to 1. If these two cards were co-drafted 100 times, the value will be equal to 100. Here's how it looks like right after it was built by the loop running through all draft results:
 
 ```{r}
 image(pairs,axes=F,col = grey(seq(0, 1, length = 256)))
 ```
-The first thing we need to do now is to normalize this matrix, and also make it symmetrical. So first let's make a copy of "pairs" variable, just in case. Then let's move from relative numbers to probabilities:
+Here's the distribution of the upper part of "pairs" values:
+
+(Tehnically this formula is a bit wrong, as it double-counts cards on the diagonal p_ii, for cards that were drafted in 2 copies, but it's close enough to the truth for a quick and dirty histogram)
+
+```{r}
+ggplot() + geom_histogram(aes(x=c(pairs+t(pairs))),bins=200) + theme_bw()
+```
+Some cards were drafted together thousands of times, but most were only drafted together a few hundred times or so. Here's a zoom-in on the leftmost part of the histogram.
+
+```{r}
+temp <- c(pairs+t(pairs))
+ggplot() + geom_histogram(aes(x=temp[temp<1000]),bins=200) + theme_bw()
+```
+Out of curiosity, what's the rarest pair of cards drafted?
+
+```{r}
+min(temp)
+```
+```{r}
+ij <- which(pairs == min(temp), arr.ind = TRUE)
+ij
+```
+```{r}
+db[ij[1],1]
+```
+```{r}
+db[ij[2],1]
+```
+A 2-color mythic and a rare of a non-matching color. No wonder.
+
+
+
+Well, let's go further. The next  thing we need to do now is to make this matrix symmetrical, and then normalize it. Let's make a copy of "pairs" variable, and move from relative numbers to probabilities:
 
 p_ij = n_ij/nCards
 
@@ -106,4 +135,4 @@ db[ij[2],1]
 
 Curiously, it's a synergy of Elvish Clancaller with itself. The card is not surprizing, it's an elf lord after all, but it is curious that with this calculation, rares clearly have an edge over commons and non-commons, as while nobody would ever pass over two cool synergistic rares, drafted in two consecutive boosters, people would sometimes pass over a synergistic common or uncommon.
 
-In case you are curious, the second most synergistic pair in this set is a combo of "blanchwood_armor" with "druid_of_horns" (a cool enchantment and a cool creature that benefits from enchantments) that have a relative preference of 71.33 .
+In case you were wondering, the second most synergistic pair in this set is a combo of "blanchwood_armor" with "druid_of_horns" (a cool enchantment and a cool creature that benefits from enchantments) that have a relative preference of 71.33 .
