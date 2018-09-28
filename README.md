@@ -10,6 +10,6 @@ In 2018 I was lucky to get access to drafting logs from [Draftsim.com](http://dr
 
 I thought that it could also be useful to post my R code online, with some comments and annotations. I don't necessarily think this code is innovative enough to be of note, but it took me some time to troubleshoot it, and to build nice visualization, so if you, dear reader, are interested in both R and MTG, you may actually enjoy it.
 
-For now it is very much work in progress. The R notebook in R-Markdown format is shown above, and [here you can see it rendered in HTML](http://htmlpreview.github.io/?https://github.com/khakhalin/MTG/blob/master/draftsim_analysis.nb.html)
+The R notebook in R-Markdown format is shown above. [Click here to see it rendered in HTML](http://htmlpreview.github.io/?https://github.com/khakhalin/MTG/blob/master/draftsim_analysis.nb.html)
 
-To be continued!
+For now it is very much work in progress, but to be continued!
