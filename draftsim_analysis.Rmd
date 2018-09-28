@@ -12,27 +12,19 @@ require(tidyr)
 load("C:/Users/Sysadmin/Documents/draftsim/pairs variable M19 part 1 v3.RData")
 ```
 
-Let me start with describing the data; the exact structure of this data is not that important for the analysis below, but I will be referring to it, so we can as well describe it. The data used for this workbook comes from the analysis of 48137 drafts of M19 dataset that users ran on draftsim web-site (http://draftsim.com) in August 2018. I then loaded this data in R, and wrote a simple code that went through final draft piles one by one, and calculate the total number of cases that every two cards from the set (i and j) were drafted together:
+Let me start with describing the data. The exact structure of this data is not that important for the analysis below, but I will be referring to it, so we can as well describe it. The data used for this workbook comes from the analysis of 48137 drafts of M19 dataset that users ran on draftsim web-site (http://draftsim.com) in August 2018. I then loaded this data in R, and wrote a simple code that went through the final draft piles one by one, calculating the total number of cases that every two cards from the set (i and j) were drafted together. This data was stored in a matrix called "pairs".
 
-* pairs - a matrix of all card co-occurrences in different drafts
+To make calculations simpler, I also counted the total number of times each card was drafted at all, and stored it in a variable "freq".
 
-To make calculations simpler, I also counted the total number of times each card was drafted at all:
+For each card, I also calculated the average step within the draft at which it was picked. I called this variable "rank", but actually a more correct name would be something like "pick order", as it's not a rank, and also it is reversed: the higher this value, the later in a draft this card was picked, on average. For technical reasons, for this value I only looked at the first booster out of 3 (at the moment of this writing, we had some issues with storing the exact sequence of card picks for later boosters). Also, for this "rank" value I didn't correct for synergies in any way: that is, I did not try to adjust the value  when the same red card was picked late in a blue draft, but early on in a red draft. I assume that with 50 000 total drafts, these effects will largely average out, although of course there are better ways to look at this problem.
 
-* freq - the total number of times each card was drafted
-
-For each card, I also calculated the average point at which it was picked. I called the variable "rank", but actually it's not ranked, and also it's reversed: the higher this value, the later in a draft this card was picked, on average. For technical reasons, for this value I only used the first booster out of 3 (at the moment of this writing, we had some issues with storing the exact sequence of card picks for later boosters), but it OK. Also, for this "rank" value I didn't correct for synergies; that is, I did not try to adjust the value in any way when the same red card was picked late in a blue draft, but early on in a red draft. I assume here that with 50 000 total drafts, these effects will largely average out, although of course there are better ways to look at this problem.
-
-* rank - the order of card picks
-
-Finally, to visualize the cards nicely I also loaded a database that for each card stores some useful information about it:
-
-* db - info about every card from this particular set
+Finally, to visualize the cards nicely I also had a database that for each card stores some useful information about it, named "db":
 
 ```{r}
 names(db)
 ```
 
-The fields that are important here are the id, the name, and the casting cost. All names I turned lowercase, replaced spaces with underscores, and purged commas, to make analysis easier. And the "cost" field I split into separate costs of each mana (WUBRG) using this command below. This was important, to classify cards into colors and guilds:
+The fields that are important here are "id", "name", and casting cost. All names were turned lowercase, with spaces replaced by underscores, and with commas purged. Then I looked at the "cost" field, and split it into separate costs of each mana (fields WUBRG) using the command shown below. This was later used to classify cards into colors and guilds:
 
 ```{r}
 db <- mutate(db,w = grepl("W",cost)*1,
