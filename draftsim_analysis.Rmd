@@ -9,13 +9,10 @@ Some R code to analyze Draftsim drafting results.
 require(dplyr)
 require(ggplot2)
 require(tidyr)
-require(rgl)
-require(car)
-require(magick)
 load("C:/Users/Sysadmin/Documents/draftsim/pairs variable M19 part 1 v3.RData")
 ```
 
-Let me start with describing the data; the exact structure of this data is not that important for the analysis, below, but I will be referring to it, so we can as well describe it. This data comes from the analysis of 48137 drafts that users ran on draftsim web-site (http://draftsim.com) in August 2018. I then loaded this data in R, and wrote a simple code that went through final draft piles one by one, and calculate the total number of cases that every two cards from the set (i and j) were drafted together:
+Let me start with describing the data; the exact structure of this data is not that important for the analysis, below, but I will be referring to it, so we can as well describe it. The data used for this workbook comes from the analysis of 48137 drafts of M19 dataset that users ran on draftsim web-site (http://draftsim.com) in August 2018. I then loaded this data in R, and wrote a simple code that went through final draft piles one by one, and calculate the total number of cases that every two cards from the set (i and j) were drafted together:
 
 * pairs - a matrix of all card co-occurrences in different drafts
 
@@ -23,7 +20,11 @@ To make calculations simpler, I also counted the total number of times each card
 
 * freq - the total number of times each card was drafted
 
-To visualize the cards nicely I also loaded a database that for each card stores some useful information about it:
+For each card, I also calculated the average point at which it was picked. I called the variable "rank", but actually it's not ranked, and also it's reversed: the higher this value, the later in a draft this card was picked, on average. For technical reasons, for this value I only used the first booster out of 3 (at the moment of this writing, we had some issues with storing the exact sequence of card picks for later boosters), but it OK. Also, for this "rank" value I didn't correct for synergies; that is, I did not try to adjust the value in any way when the same red card was picked late in a blue draft, but early on in a red draft. I assume here that with 50 000 total drafts, these effects will largely average out, although of course there are better ways to look at this problem.
+
+* rank - the order of card picks
+
+Finally, to visualize the cards nicely I also loaded a database that for each card stores some useful information about it:
 
 * db - info about every card from this particular set
 
@@ -136,3 +137,91 @@ db[ij[2],1]
 Curiously, it's a synergy of Elvish Clancaller with itself. The card is not surprizing, it's an elf lord after all, but it is curious that with this calculation, rares clearly have an edge over commons and non-commons, as while nobody would ever pass over two cool synergistic rares, drafted in two consecutive boosters, people would sometimes pass over a synergistic common or uncommon.
 
 In case you were wondering, the second most synergistic pair in this set is a combo of "blanchwood_armor" with "druid_of_horns" (a cool enchantment and a cool creature that benefits from enchantments) that have a relative preference of 71.33 .
+
+Now, time to go from these relative mutual probabilities to distances, to make a nice plot. Mutual probabilities are high if two cards are often drafted together, but we want a distance-like value that would be low if two cards are often drafted together. There are many formulas that one can use here, but we'll go with a simplest one:
+
+```{r}
+dist <- (1-0.99*p/max(p))
+```
+
+I use 0.99 to keep the closest cards still separated a bit, just in case.
+
+Now, there is a whole set of methods that are willing to take a matrix of pairwise distances and try to find an arrangement of points in a space of some dimension that would approximate these pairwise distances as well as possible. The idea behind the methods is simple: throw some points out there, and move them around, until some measure of alingment is maximised. Say, one can try to maxime Pearson correlation between pairwise distances in this new low-dimensional space, and "input pairwise distances".
+
+The simplest approach from this family is called MDS, or multidimensional scaling. Let's apply it to our data:
+
+```{r}
+ndim <- 2 
+fit <- cmdscale(dist,eig=TRUE, k=ndim)
+scale <- data.frame(x=fit$points[,1],y=fit$points[,2])
+```
+
+Now we have a dataset with x and y points for each card, and the distribution of this points approximates target pairwise distances as well as possible (in some sense, at least). The points are nice, but how to interpret them?
+
+```{r}
+ggplot(scale,aes(x,y)) + theme_bw() + geom_point() + coord_fixed()
+```
+We'll have to draw from card database "db", and combine this dataset with newly calculated x and y points. If you remember, in my "db" set I calculated mana costs for each mana color, and stored them in fields names WUBRG respectively. I'll now need to somehow transform these WUBRG fields into one field with "color" values. My solution (below) is a bit weird, but hey, it works.
+
+```{r}
+scale <- mutate(scale,id=1:nrow(scale))       # Add a column of ids (as the sequence of cards matched ids from db)
+scale <- inner_join(scale,db,by="id")         # Bring all fields from db to scale, useful and useless alike
+scale <- mutate(scale,color_n=0)              # What is the color of this card, if coded as a number?
+scale <- mutate(scale,color_n=w*1+u*2+b*3+r*4+g*5) 
+scale <- mutate(scale,color_n=color_n*((w+u+b+r+g)==1)+6*((w+u+b+r+g)>1))
+
+# Now we need to translate these numbers into factors. I'll use an SQL-style approach; maybe there's a simpler way
+colorList <- data.frame(color_n=c(0,1,2,3,4,5,6),
+                        color=c("0","W","U","B","R","G","M"))
+colorList$color = factor(colorList$color,levels=c("0","W","U","B","R","G","M"),ordered=T) # Don't order alphabetically!
+scale <- inner_join(scale,colorList,by="color_n") # Done
+```
+
+Time to plot same picture as above, but with proper colors!
+
+```{r}
+myColors <- c("gray","tan2","blue","black","red","green","purple")
+ggplot(scale,aes(x,y,color=color)) + theme_bw() + geom_point() + coord_fixed() +
+  scale_color_manual(values=myColors) + xlab('') + ylab('')
+```
+
+That's a nice and interesting plot! Please read our [Post at Draftsim blog](https://draftsim.com/blog/draft-data-analysis/) for a full detailed description of how to read it, and how to interpret it.
+
+To make a plot with labels, I used a package ggrepel. This plot takes a while to generate, and it looks horrible in a workbook, but IRL one can save it at 2000x2000 px, as I did for the blog post, which made it quite readable.
+
+```{r}
+require(ggrepel)
+ggplot(scale) + theme_bw() + geom_point(aes(x,y,color=color)) +
+  scale_color_manual(values=c("gray","tan2","blue","black","red","green","purple")) +
+  geom_text_repel(aes(x,y,label=name),size=2,box.padding = 0.01, point.padding = 0.01) +
+  xlab('') + ylab('') 
+```
+
+Now, let's look at the pick order. We'll need to attach the "rank" variable to our data frame, and then we can visualize it:
+
+```{r}
+scale <- mutate(scale,rank=rank)
+ggplot(scale,aes(color,rank(rank),color=color)) + theme_bw() + geom_point() +
+  geom_text(aes(label=name),color='black',size=2,hjust="left",position = position_nudge(x = 0.05)) +
+  scale_color_manual(values=c("gray","tan2","blue","black","red","green","purple"))
+```
+Again, this plot doesn't necessarily look good at this resolution, but it would look better if scaled properly.
+
+Finally, what about 3d plots for the paper? To get a 3d plot, I would reset ndim to 3:
+```{r}
+ndim <- 3
+```
+
+then rerun the mds analysis (but now in 3D rather than 2D), and visualize it with RGL package:
+
+```{r}
+require(rgl)
+require(car)
+require(magick)
+
+plot3d(scale$x,scale$y,scale$z,surface=F,col=myColors[scale$color],
+       xlab="", ylab="", zlab="", size=4, alpha=0.8)
+movie3d(spin3d(axis = c(0,0,1), rpm = 2), duration=10, type="gif", dir=myFolder)
+```
+
+I won't be running this code here, but you can see a beautiful rotating 3D plot [in the original article](https://draftsim.com/blog/draft-data-analysis/) 
