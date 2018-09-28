@@ -222,7 +222,7 @@ require(magick)
 
 plot3d(scale$x,scale$y,scale$z,surface=F,col=myColors[scale$color],
        xlab="", ylab="", zlab="", size=4, alpha=0.8)
-movie3d(spin3d(axis = c(0,0,1), rpm = 2), duration=10, type="gif", dir=myFolder)
+# movie3d(spin3d(axis = c(0,0,1), rpm = 2), duration=10, type="gif", dir=myFolder)
 ```
 
 I won't be running this code here, but you can see a beautiful rotating 3D plot [in the original article](https://draftsim.com/blog/draft-data-analysis/) 
