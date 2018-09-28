@@ -201,6 +201,7 @@ Now, let's look at the pick order. We'll need to attach the "rank" variable to o
 
 ```{r}
 scale <- mutate(scale,rank=rank)
+
 ggplot(scale,aes(color,rank(rank),color=color)) + theme_bw() + geom_point() +
   geom_text(aes(label=name),color='black',size=2,hjust="left",position = position_nudge(x = 0.05)) +
   scale_color_manual(values=c("gray","tan2","blue","black","red","green","purple"))
