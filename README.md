@@ -1,4 +1,4 @@
-Fun analyses of Magic the Gathering data
+R Analyses of Magic the Gathering data
 ========================================
 
 ## Drafts from Draftsim
