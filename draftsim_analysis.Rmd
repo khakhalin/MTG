@@ -14,9 +14,11 @@ load("C:/Users/Sysadmin/Documents/draftsim/pairs variable M19 part 1 v3.RData")
 
 Let me start with describing the data. The exact structure of this data is not that important for the analysis below, but I will be referring to it, so we can as well describe it. The data used for this workbook comes from the analysis of 48137 drafts of M19 dataset that users ran on draftsim web-site (http://draftsim.com) in August 2018. 
 
-I then loaded this data in R, and wrote a simple code that went through the final draft piles one by one, calculating the total number of cases that every two cards from the set (i and j) were drafted together (n_ij). This data was stored in a matrix called "pairs". 
+I loaded this data in R, and wrote a simple code that went through the final draft piles one by one, calculating the total number of cases that every two cards from the set (i and j) were drafted together (n_ij). This data was stored in a matrix called "pairs". 
 
-Now, to be clear, if in one draft card i was drafted together with two copies of card j, I would count this pair twice. This is an important distinction for common cards: I did not count the number of piles that have both cards i and j in it; I counted the number of card pair that happened to be cards i and j. It's an important distinction. Also it means that n_ii is a thing, as it shows how many times card i was part of a pair with another copy of itself.
+Now, to be clear, if in one particular draft we had a card i, and it was drafted together with two copies of card j, I would count this pair twice. This is a very important point for frequent cards (commons): I did not count the number of _piles_ that had both cards i and j in them; I counted the number of _card pairs_ that happened to be cards i and j. This will be important later. 
+
+Also this definition means that n_ii (the number of times card i was drafted with itself) is a thing, as it shows how many times a pile would contain 2 cards that both happened to be card #i. The more often card i was drafted repeatedly, the higher n_ii would be.
 
 To make calculations simpler, I also counted the total number of times each card was drafted at all, and stored it in a variable "freq". Tehnically this can be reconstructed from pairs, but why would I do it if there's an easier way.
 
