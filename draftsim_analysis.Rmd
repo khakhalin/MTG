@@ -12,13 +12,17 @@ require(tidyr)
 load("C:/Users/Sysadmin/Documents/draftsim/pairs variable M19 part 1 v3.RData")
 ```
 
-Let me start with describing the data. The exact structure of this data is not that important for the analysis below, but I will be referring to it, so we can as well describe it. The data used for this workbook comes from the analysis of 48137 drafts of M19 dataset that users ran on draftsim web-site (http://draftsim.com) in August 2018. I then loaded this data in R, and wrote a simple code that went through the final draft piles one by one, calculating the total number of cases that every two cards from the set (i and j) were drafted together. This data was stored in a matrix called "pairs".
+Let me start with describing the data. The exact structure of this data is not that important for the analysis below, but I will be referring to it, so we can as well describe it. The data used for this workbook comes from the analysis of 48137 drafts of M19 dataset that users ran on draftsim web-site (http://draftsim.com) in August 2018. 
 
-To make calculations simpler, I also counted the total number of times each card was drafted at all, and stored it in a variable "freq".
+I then loaded this data in R, and wrote a simple code that went through the final draft piles one by one, calculating the total number of cases that every two cards from the set (i and j) were drafted together (n_ij). This data was stored in a matrix called "pairs". 
+
+Now, to be clear, if in one draft card i was drafted together with two copies of card j, I would count this pair twice. This is an important distinction for common cards: I did not count the number of piles that have both cards i and j in it; I counted the number of card pair that happened to be cards i and j. It's an important distinction. Also it means that n_ii is a thing, as it shows how many times card i was part of a pair with another copy of itself.
+
+To make calculations simpler, I also counted the total number of times each card was drafted at all, and stored it in a variable "freq". Tehnically this can be reconstructed from pairs, but why would I do it if there's an easier way.
 
 For each card, I also calculated the average step within the draft at which it was picked. I called this variable "rank", but actually a more correct name would be something like "pick order", as it's not a rank, and also it is reversed: the higher this value, the later in a draft this card was picked, on average. For technical reasons, for this value I only looked at the first booster out of 3 (at the moment of this writing, we had some issues with storing the exact sequence of card picks for later boosters). Also, for this "rank" value I didn't correct for synergies in any way: that is, I did not try to adjust the value  when the same red card was picked late in a blue draft, but early on in a red draft. I assume that with 50 000 total drafts, these effects will largely average out, although of course there are better ways to look at this problem.
 
-Finally, to visualize the cards nicely I also had a database that for each card stores some useful information about it, named "db":
+And lastly, to visualize the cards nicely I also had a database that for each card stores some useful information about it, named "db":
 
 ```{r}
 names(db)
@@ -36,7 +40,7 @@ db <- mutate(db,w = grepl("W",cost)*1,
 
 All other fields may be ignored.
 
-So, let's look at the "pairs" matrix. Again, it contains the data about every co-occurrence of every two cards in thefinal draft piles. That is, if out of entire 48137 drafts, cards i and j were drafted together only once, the ij element of this matrix will be equal to 1. If these two cards were co-drafted 100 times, the value will be equal to 100. Here's how it looks like right after it was built by the loop running through all draft results:
+So, let's look at the "pairs" matrix. Again, it contains the data about every co-occurrence of every two cards in final draft piles. That is, if out of entire 48137 drafts, cards i and j were drafted together only once, the ij element of this matrix will be equal to 1. If these two cards were co-drafted 100 times, the value will be equal to 100. And for now this matrix is asymmetric, as I only filled it for i<=j. Here's how it looks like right after it was built by the loop running through all draft results:
 
 ```{r}
 image(pairs,axes=F,col = grey(seq(0, 1, length = 256)))
@@ -73,31 +77,44 @@ A 2-color mythic and a rare of a non-matching color. No wonder.
 
 
 
-Well, let's go further. The next  thing we need to do now is to make this matrix symmetrical, and then normalize it. Let's make a copy of "pairs" variable, and move from relative numbers to probabilities:
+Well, let's go further. The next  thing we need to do now is to make this matrix symmetric, and normalize it, to move from numbers to probabilities:
 
-p_ij = n_ij/nCards
+    p_ij = n_ij/nPairs = n_ji/(pileSize*(pileSize-1)*nDrafts)
 
-Finally, let's move from mutual probabilities to relative probabilities. That is, let's assume that card i can be found in drafted hands with probability p_i = n_i/nCards , and similar probability for card j is denoted as p_j. Then, if the cards are drafted independently from each other (that is, if the player doesn't care about the presence of card i in their hand, while drafting card j, and vice versa), then we'll have p_ij = p_i * p_j
+where 'p_ij' is the probability that a randomly chosen pair of cards from a pile is actually a pair containing one card i and one card j.
+
+Another important player here is the probability that a randomly chosen card from your pile is card i. It's given by an even more obvious formula:
+
+    p_i = n_i/(pileSize*nDrafts)
+
+Now, cards i and j are drafted independently from each other, that is, if the player doesn't care about the presence of card i in their hand, while drafting card j, and the other way around, then we'll have 'p_ij = p_i * p_j'
 
 In practice some cards are of course drafted together more often, and so p_ij > p_i * p_j, while some cards are drafted together more rarely. We can quantify this preference (or anti-prefereence) as a coefficient a, with  the following formula:
 
-a_ij = p_ij/(p_i * p_j)
+    a_ij = p_ij/(p_i * p_j)
+    
+or
 
-In practice I tracked the number (not probability) that each pair of cards ended up in the same pile n_ij, as well as the number of times card i was present in the final pile n_i , and the same for card j: n_j. If a card was present in the final pile twice, it was accounted twice, both in the n_ij and in n_i. For these counts, in case of independence, we can expect
+    a_ij = n_ij/(pileSize*(pileSize-1)*nDrafts)/(n_i*n_j/(pileSize*nDrafts)^2) = 
+    = n_ij/(n_i*n_j) * pileSize/(pileSize-1) * nDrafts
+    
+Or, if you don't want to get that mathy, you can just calculate empyrical probabilities, and roll with them:
 
-n_ij/nDrafts = n_i/nDrafts * n_j/Drafts * pileSize*(pileSize-1), 
-
-where pileSize = 14*3 and so
-
-k_ij = n_ij/(n_i * n_j) * nDrafts * 14*3
-
+    p_i = n_i/sum(n_i)
+    p_j = n_j/sum(n_i)
+    p_ij = n_ij/sum(n_ij)
+    a_ij = p_ij/(p_i * p_j)
+    
+Which is exactly what I did, as actual data was messier than the neat assumptions I wrote above; for example, some boosters had foil lands in them, which occupied a spot of a normal card, thus reducing the effective size of a meaningful pile by one. Things like that don't happen too often, but it's just easier to go with empirical values, to have a self-coorrecting code (although admittedly it may sometimes mask bugs).
 
 ```{r}
 nCards <- nrow(db)                 # Repeat, in case the data was reloaded
+nTotalPicks <- sum(freq)
+nTotalPairs <- sum(pairs)
 p <- pairs                         # Make a copy
 for(jCard in 1:nCards) {
     for(iCard in 1:jCard) {
-      p[iCard,jCard] <- p[iCard,jCard]/(freq[iCard]*freq[jCard])*nDrafts*14*3
+      p[iCard,jCard] <- p[iCard,jCard]/nTotalPairs/(freq[iCard]*freq[jCard])*nTotalPicks^2
       p[jCard,iCard] <- p[iCard,jCard]
     }
 }
@@ -128,7 +145,7 @@ db[ij[2],1]
 
 Curiously, it's a synergy of Elvish Clancaller with itself. The card is not surprizing, it's an elf lord after all, but it is curious that with this calculation, rares clearly have an edge over commons and non-commons, as while nobody would ever pass over two cool synergistic rares, drafted in two consecutive boosters, people would sometimes pass over a synergistic common or uncommon.
 
-In case you were wondering, the second most synergistic pair in this set is a combo of "blanchwood_armor" with "druid_of_horns" (a cool enchantment and a cool creature that benefits from enchantments) that have a relative preference of 71.33 .
+In case you were wondering, the second most synergistic pair in this set is a combo of "blanchwood_armor" with "druid_of_horns" (a cool enchantment and a cool creature that benefits from enchantments).
 
 Now, time to go from these relative mutual probabilities to distances, to make a nice plot. Mutual probabilities are high if two cards are often drafted together, but we want a distance-like value that would be low if two cards are often drafted together. There are many formulas that one can use here, but we'll go with a simplest one:
 
