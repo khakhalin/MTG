@@ -5,22 +5,22 @@
 # and takes several hours, while Python runs same analysis in about 10 seconds. So it will be removed. Soon.
 # --------
 
-#install.packages("dplyr")
-#install.packages("ggplot2")
 require(dplyr)
 require(ggplot2)
 require(tidyr)
 
 myFolder <- "C:/Users/Sysadmin/Documents/draftsim" # There seems to be no good way to use relative addresses in R
+
 #fileDb <- c("Draftsim Ratings - RIX","Draftsim Ratings - XLN")
-#fileData <- "2018-02-23 Two days data from Draftsim.csv"
 #fileDb <- "Draftsim Ratings - DOM"
-#fileData <- "2018-04-16 Dominiaria initial data-2.csv"
 #fileDb <- "Draftsim Ratings - M19"
 fileDb <- "Draftsim Ratings - GRN"
+
+fileData <- "2018-02-23 Two days data from Draftsim.csv" # XLN
+#fileData <- "2018-04-16 Dominiaria initial data-2.csv"
 #fileData <- "2018-07-23 M19 drafts.csv"
 #fileData <- "2018-08-23 m19 drafts round 2.csv"
-fileData <- "2018-10-05 GRN Draft Data 1.csv"
+#fileData <- "2018-10-05 GRN Draft Data 1.csv"
 currentSet <- "GRN" # Options for now: "M19" "DOM" "XLN"
 
 db <- NULL # Card database
@@ -109,11 +109,13 @@ guilds = guild/nrow(d)
 
 ### -----------------------------------------
 ### Here's a good point to save the environment, as it takes about a minute for every 1000 drafts
-save(pairs,freq,rank,db,guilds,prefs,colorHist,nDrafts,file=paste(myFolder,"/","pairs.RData",sep=""))
+save(pairs,freq,rank,db,nDrafts,file=paste(myFolder,"/","pairs.RData",sep="")) # For DOM and XLN
+# save(pairs,freq,rank,db,guilds,prefs,nDrafts,file=paste(myFolder,"/","pairs.RData",sep="")) # For m19
+# save(pairs,freq,rank,db,guilds,prefs,colorHist,nDrafts,file=paste(myFolder,"/","pairs.RData",sep=""))
 ### -----------------------------------------
 
-image(pairs,axes=F,col = grey(seq(0, 1, length = 256)))
-#image(prefs,axes=F,col = grey(seq(0, 1, length = 256)))
+# image(pairs,axes=F,col = grey(seq(0, 1, length = 256)))
+# image(prefs,axes=F,col = grey(seq(0, 1, length = 256)))
 
 
 
@@ -132,7 +134,8 @@ for(jCard in 1:nCards) {
 dist <- (1-0.99*p/max(p))
 #dist <- max(p)/(p+1)
 #dist <- max(p)^2/(p+1)^2
-image(dist,axes=F,col = grey(seq(0, 1, length = 256)))
+
+# image(dist,axes=F,col = grey(seq(0, 1, length = 256)))
 
 ndim <- 2  # Number of dimensions ot use
 
@@ -168,7 +171,17 @@ myColors <- c("gray","tan2","blue","black","red","green","purple")
 
 # Clustering, only points
 ggplot(scale) + theme_bw() + geom_point(aes(x,y,color=color)) +
-  scale_color_manual(values=myColors) + xlab('') + ylab('')
+  scale_color_manual(values=myColors) + xlab('') + ylab('') +
+  theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
+        axis.text.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+# Save, for the future (then go and rename the file, oK?)
+# myFolder is defined at the fery head of the file; rerun that one line
+save(scale,file=paste(myFolder,"/","scale.RData",sep=""))
+
 
 # Points and labels
 #install.packages("ggrepel")
