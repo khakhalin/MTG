@@ -211,7 +211,7 @@ ggplot(temp,aes(Rating,r)) + theme_bw() + geom_point(aes(color=color)) +
 ### ----------------------- 3d plot ---------
 # (For it to work, scaling above shoudl be performed to 3D instead of 2D)
 require(rgl)
-require(car)
+require(car) # Applied regression
 require(magick)
 
 plot3d(scale$x,scale$y,scale$z,surface=F,col=myColors[scale$color],
@@ -254,7 +254,8 @@ ggplot(data=histData2,aes(t,Value,color=Color)) + theme_bw() +
   geom_point(alpha=0.3) + geom_smooth(method=lm,se=F) +
   scale_color_manual(values=myColors2) +
   facet_grid(.~Color) + 
-  xlab('Thousands of drafts into the guild') + ylab('Share as a 1st color')
+  xlab('Thousands of drafts') + ylab('Share as a 1st color')
+
 
 # ------------- Save results
 write.table(scale, file = "C:/Users/Sysadmin/Documents/draftsim/out.csv", sep = ",",col.names = NA, qmethod = "double")
