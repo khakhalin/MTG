@@ -26,7 +26,12 @@ ggplot(d,aes(avg,var)) + theme_bw() +
   geom_point(aes(color=rarity),alpha=0.8) +
   scale_color_manual(values=colorRarity) +
   scale_x_continuous(limits=c(1,13),breaks = seq(2, 12, by = 2)) +
-  xlab('Average pick order') + ylab('Variance of pick order') + ggtitle(plotTitle)
+  xlab('Average pick order') + ylab('Variance of pick order') + ggtitle(plotTitle) +
+  theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
+        axis.text.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  NULL
 
 # Same plot with labels:
 ggplot(d,aes(avg,var)) + theme_bw() + 
