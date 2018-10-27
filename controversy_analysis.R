@@ -4,18 +4,19 @@ require(tidyr)
 require(ggrepel)
 
 colorRarity <- c('black','red','gold2','gray50')
+colorColor <- c("gray","purple","tan2","blue","black","green","red") # Bobby's messed up
 
 plotTitle = 'GRN'
 
-#d <- read.csv("draftsim/jupyter/controversial_cards_m19.csv",header=T)
-d <- read.csv("draftsim/jupyter/controversial_cards_grn.csv",header=T)
+d <- read.csv("draftsim/jupyter/controversial_cards_m19.csv",header=T)
+# d <- read.csv("draftsim/jupyter/controversial_cards_grn.csv",header=T)
 #d <- read.csv("draftsim/jupyter/controversial_cards_data_onColor.csv",header=T)
 names(d)
 d <- subset(d,avg<16) # Remove weird cards that were never actually drafted
 d <- subset(d,rarity!='Basic Land')
 
-#dbot <- read.csv("draftsim/jupyter/controversial_cards_m19_bot.csv",header=T)
-dbot <- read.csv("draftsim/jupyter/controversial_cards_grn_bot.csv",header=T)
+dbot <- read.csv("draftsim/jupyter/controversial_cards_m19_bot.csv",header=T)
+#dbot <- read.csv("draftsim/jupyter/controversial_cards_grn_bot.csv",header=T)
 #dbot <- read.csv("draftsim/jupyter/controversial_cards_data_onColor.csv",header=T)
 names(dbot)
 dbot <- subset(dbot,avg<16) # Remove weird cards that were never actually drafted
@@ -33,13 +34,25 @@ ggplot(d,aes(avg,var)) + theme_bw() +
         panel.grid.minor = element_blank()) +
   NULL
 
+# Plot with card colors:
+ggplot(d,aes(avg,var)) + theme_bw() + 
+  geom_point(aes(color=factor(color)),alpha=0.8) +
+  scale_color_manual(values=colorColor) +
+  scale_x_continuous(limits=c(1,13),breaks = seq(2, 12, by = 2)) +
+  xlab('Average pick order') + ylab('Variance of pick order') + ggtitle(plotTitle) +
+  theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
+        axis.text.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  NULL
+
 # Same plot with labels:
 ggplot(d,aes(avg,var)) + theme_bw() + 
   geom_point(aes(color=rarity),alpha=0.8) +
   scale_color_manual(values=colorRarity) +
   scale_x_continuous(limits=c(1,13),breaks = seq(2, 12, by = 2)) +
-  xlab('Average pick order') + ylab('Variance of pick order') + ggtitle(setName) +
-  #geom_text_repel(aes(avg,var,label=name),color='black',size=2,box.padding = 0.01, point.padding = 0.01) +
+  xlab('Average pick order') + ylab('Variance of pick order') + ggtitle(plotTitle) +
+  geom_text_repel(aes(avg,var,label=name),color='black',size=2,box.padding = 0.01, point.padding = 0.01) +
   NULL
 
 
