@@ -4,19 +4,19 @@ require(tidyr)
 require(ggrepel)
 
 colorRarity <- c('black','red','gold2','gray50')
-colorColor <- c("gray","purple","tan2","blue","black","green","red") # Bobby's messed up
+colorColor <- c("gray","purple","tan2","blue","black","green","red") # Bobby's messed up sequence of colors
 
 plotTitle = 'GRN'
 
-d <- read.csv("draftsim/jupyter/controversial_cards_m19.csv",header=T)
-# d <- read.csv("draftsim/jupyter/controversial_cards_grn.csv",header=T)
+#d <- read.csv("draftsim/jupyter/controversial_cards_m19.csv",header=T)
+d <- read.csv("draftsim/jupyter/controversial_cards_grn.csv",header=T)
 #d <- read.csv("draftsim/jupyter/controversial_cards_data_onColor.csv",header=T)
 names(d)
 d <- subset(d,avg<16) # Remove weird cards that were never actually drafted
 d <- subset(d,rarity!='Basic Land')
 
-dbot <- read.csv("draftsim/jupyter/controversial_cards_m19_bot.csv",header=T)
-#dbot <- read.csv("draftsim/jupyter/controversial_cards_grn_bot.csv",header=T)
+#dbot <- read.csv("draftsim/jupyter/controversial_cards_m19_bot.csv",header=T)
+dbot <- read.csv("draftsim/jupyter/controversial_cards_grn_bot.csv",header=T)
 #dbot <- read.csv("draftsim/jupyter/controversial_cards_data_onColor.csv",header=T)
 names(dbot)
 dbot <- subset(dbot,avg<16) # Remove weird cards that were never actually drafted
@@ -171,3 +171,30 @@ ggplot(d) + theme_bw() +
   geom_point(aes(avg,relvar,color=rarity),alpha=0.8) +
   scale_color_manual(values=colorRarity) +
   scale_x_continuous(limits=c(1,13),breaks = seq(2, 12, by = 2))
+
+
+# --- Show controversial cards on the synergy plot
+
+load("draftsim/scale GRN.RData")
+
+scale2 <- inner_join(scale,dplyr::select(d,name,avg,var,madj,vadj),by="name")
+require(viridis)
+
+ggplot(scale2) + theme_bw() + geom_point(aes(x,y,color=avg)) +
+  xlab('') + ylab('') +
+  theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
+        axis.text.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_color_viridis() +
+  ggtitle("GRN, Synergy plot, colored by mean pick")
+
+ggplot(scale2) + theme_bw() + geom_point(aes(x,y,color=var)) +
+  xlab('') + ylab('') +
+  theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
+        axis.text.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_color_plasma() +
+  ggtitle("GRN, Synergy plot, colored by mean pick")
+
