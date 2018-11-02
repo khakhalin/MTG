@@ -195,6 +195,6 @@ ggplot(scale2) + theme_bw() + geom_point(aes(x,y,color=var)) +
         axis.text.y=element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  scale_color_plasma() +
-  ggtitle("GRN, Synergy plot, colored by mean pick")
+  scale_color_viridis(option="plasma") +
+  ggtitle("GRN, Synergy plot, colored by var pick")
 
