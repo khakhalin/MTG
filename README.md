@@ -3,7 +3,7 @@ R Analyses of Magic the Gathering data
 
 ## Drafts from Draftsim
 
-I was lucky to get access to drafting logs from [Draftsim.com](http://draftsim.com) site, and play with this data in R. Together with a team of two more people (Dan Troha and Bobby Mills) we wrote up these analyses as a series of blog posts. As of Nov 2018 we published 3 posts:
+I am lucky to have access to drafting logs from [Draftsim.com](http://draftsim.com) site, and be able to play with this data in Python and R. In a team with two more people (Dan Troha and Bobby Mills) we now write results of these analysis up, as a series of blog posts. As of Nov 2018 we published 3 posts:
 
 1. [Basic analysis](https://draftsim.com/blog/draft-data-analysis/) - introducing the co-drafting distances, and MDS scaling.
 2. [Changes in drafting](https://draftsim.com/blog/m19-format-evolution/) : drafting of the same set early in the season, compared to late  in the season. Also, statistics of color preferences (aka Guilds) among players.
