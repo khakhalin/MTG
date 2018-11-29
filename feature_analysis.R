@@ -2,7 +2,7 @@
 
 source("/project/csbio/henry/Documents/libraries/lib_util.R")
 .libPaths("/project/csbio/henry/Documents/libraries/R")
-packages <- c("jsonlite", "ggplot2", "ggthemes", "caret", "cluster", "fpc")
+packages <- c("jsonlite", "ggplot2", "ggthemes", "caret", "cluster", "fpc", "stringr")
 for (p in packages) {
   library(p, character.only = TRUE)
 }
@@ -54,7 +54,10 @@ human_features <- data.frame("avg_cmc" = rep(0, n_drafts), "sd_cmc" = rep(0, n_d
                              "avg_copies" = rep(NA, n_drafts), "num_lands" = rep(NA, n_drafts), 
                              "num_creatures" = rep(NA, n_drafts), "num_instants" = rep(NA, n_drafts), 
                              "num_sorceries" = rep(NA, n_drafts), "num_artifacts" = rep(NA, n_drafts), 
-                             "num_enchantments" = rep(NA, n_drafts), "num_planeswalkers" = rep(NA, n_drafts))
+                             "num_enchantments" = rep(NA, n_drafts), "num_planeswalkers" = rep(NA, n_drafts),
+                             "num_W" = rep(NA, n_drafts), "num_U" = rep(NA, n_drafts), 
+                             "num_B" = rep(NA, n_drafts), "num_R" = rep(NA, n_drafts),
+                             "num_G" = rep(NA, n_drafts))
 for (i in 1:n_drafts) {
   pool <- human_drafts[i,3]
   pool <- strsplit(pool, ",")[[1]]
@@ -86,11 +89,20 @@ for (i in 1:n_drafts) {
   human_features[i,] <- summarize_deck(pool_df)
 }
 
-# Removes number of planeswalkers feature
-df <- human_features[,!(colnames(human_features) %in% c("num_planeswalkers"))]
+# Gets dominant colors for each deck
+human_features$dominant_color <- "none"
+for (i in 1:nrow(human_features)) {
+  deck <- human_features[i,(colnames(human_features) %in% c("num_W", "num_U", "num_B", "num_R", "num_G"))]
+  colnames(deck) <- c("W", "U", "B", "R", "G")
+  if (sum(deck > 0.3) >= 2) {
+    human_features$dominant_color[i] <- paste(colnames(deck)[deck > 0.3], collapse = "/")
+  } else if (sum(deck > 0.4) >= 1 & sum(deck > 0.2) >= 1) {
+    human_features$dominant_color[i] <- paste(colnames(deck)[deck > 0.4 | deck > 0.2], collapse = "/")
+  }
+}
 
 # Writes data to file
-write.table(df, file.path("data", paste0(set, "_deck_features.tsv")), sep = "\t", 
+write.table(human_features, file.path("data", paste0(set, "_deck_features.tsv")), sep = "\t", 
             row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 #####
@@ -98,16 +110,32 @@ write.table(df, file.path("data", paste0(set, "_deck_features.tsv")), sep = "\t"
 #####
 
 # Clusters decks using PCA on scaled data
-pca <- prcomp(df, scale = TRUE)
-pca_data <- data.frame(scale(as.matrix(df)) %*% pca$rotation[,1:2])
+pca <- prcomp(human_features[1:(ncol(human_features) - 6)], scale = TRUE)
+pca_data <- data.frame(scale(as.matrix(human_features[1:(ncol(human_features) - 6)])) %*% pca$rotation[,1:2])
+pca_data$dominant_color <- human_features$dominant_color
 
 # Plots PCs
 ggplot(pca_data, aes(PC1, PC2)) +
-  geom_point(size = 1.5, alpha = 0.8) +
+  geom_point(size = 1.5, alpha = 0.8, aes(color = dominant_color)) +
   xlab("PC1") +
   ylab("PC2") +
+  labs(color = "Dominant colors") +
   theme_tufte(base_size = 14)
-ggsave(file.path("MTG", "plots", paste0(set, "_pca.png")), dpi = 400, width = 8, height = 6)
+ggsave(file.path("MTG", "plots", paste0(set, "_no_colors_pca.png")), dpi = 400, width = 8, height = 6)
+
+# Clusters decks using PCA on scaled data with colors added
+pca <- prcomp(human_features[1:(ncol(human_features) - 1)], scale = TRUE)
+pca_data <- data.frame(scale(as.matrix(human_features[1:(ncol(human_features) - 1)])) %*% pca$rotation[,1:2])
+pca_data$dominant_color <- human_features$dominant_color
+
+# Plots PCs
+ggplot(pca_data, aes(PC1, PC2)) +
+  geom_point(size = 1.5, alpha = 0.8, aes(color = dominant_color)) +
+  xlab("PC1") +
+  ylab("PC2") +
+  labs(color = "Dominant colors") +
+  theme_tufte(base_size = 14)
+ggsave(file.path("MTG", "plots", paste0(set, "_with_colors_pca.png")), dpi = 400, width = 8, height = 6)
 
 
 
