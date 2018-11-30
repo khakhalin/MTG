@@ -153,12 +153,12 @@ summarize_deck <- function(deck) {
 
 # Inner function to calculate stats for either the sideboard or the mainboard
 summarize_deck_inner <- function(deck) {
-  stats <- data.frame("avg_cmc" = 0, "sd_cmc" = 0,
-                      "avg_power" = 0, "avg_tough" = 0, 
-                      "avg_copies" = NA, "num_lands" = NA, 
-                      "num_creatures" = NA, "num_instants" = NA, 
-                      "num_sorceries" = NA, "num_artifacts" = NA, 
-                      "num_enchantments" = NA, "num_planeswalkers" = NA)
+  stats <- data.frame("avg_cmc" = 0, "sd_cmc" = 0, "avg_power" = 0, "avg_tough" = 0, 
+                      "avg_copies" = NA, "num_lands" = NA, "num_creatures" = NA, 
+                      "num_instants" = NA, "num_sorceries" = NA, "num_artifacts" = NA, 
+                      "num_enchantments" = NA, "num_planeswalkers" = NA,
+                      "num_W" = NA, "num_U" = NA, "num_B" = NA, 
+                      "num_R" = NA, "num_G" = NA)
   m <- sum(deck$copies)
   stats$avg_copies <- mean(deck$copies, na.rm = TRUE)
   stats$num_lands <- sum(deck[grepl("Land", deck$type),]$copies, na.rm = TRUE) / m
@@ -170,6 +170,11 @@ summarize_deck_inner <- function(deck) {
                                 na.rm = TRUE) / m
   stats$num_planeswalkers <- sum(deck[grepl("Planeswalker", deck$type),]$copies, 
                                  na.rm = TRUE) / m
+  stats$num_W = sum(str_count(deck$manaCost, "W"), na.rm = TRUE)
+  stats$num_U = sum(str_count(deck$manaCost, "U"), na.rm = TRUE)
+  stats$num_B = sum(str_count(deck$manaCost, "B"), na.rm = TRUE)
+  stats$num_R = sum(str_count(deck$manaCost, "R"), na.rm = TRUE)
+  stats$num_G = sum(str_count(deck$manaCost, "G"), na.rm = TRUE)
   
   # Scales averages appropriately by number of copies
   nonland <- deck[!grepl("Land", deck$type),]
@@ -191,6 +196,14 @@ summarize_deck_inner <- function(deck) {
       stats$avg_power <- stats$avg_power + (creatures$copies[i]/n)*creatures$power[i]
       stats$avg_tough <- stats$avg_tough + (creatures$copies[i]/n)*creatures$tough[i]
     }
+  }
+  total_colors <- stats$num_W + stats$num_U + stats$num_B + stats$num_R + stats$num_G
+  if (total_colors > 0) {
+    stats$num_W <- stats$num_W / total_colors
+    stats$num_U <- stats$num_U / total_colors
+    stats$num_B <- stats$num_B / total_colors
+    stats$num_R <- stats$num_R / total_colors
+    stats$num_G <- stats$num_G / total_colors
   }
   return(stats)
 }
