@@ -12,3 +12,5 @@ Code commentaries:
 * Basic analysis in R: [markdown notebook](draftsim_analysis.Rmd), and [the same thing rendered in HTML](http://htmlpreview.github.io/?https://github.com/khakhalin/MTG/blob/master/draftsim_analysis.nb.html) (with ggplot graphs and everything).
 
 To be continued!
+
+![rotating cube](https://draftsim.com/blog/wp-content/uploads/2018/08/rotating-m19-cube.gif)
