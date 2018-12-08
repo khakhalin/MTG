@@ -1,8 +1,11 @@
 # --------
-# Main draft analysis script
-# Currently consists of several parts that need to be executed manually, in a correct order.
+# Original (R only) draft analysis script
+#
+# Consists of several parts that need to be executed manually, in a correct order.
 # Which is super-annoying. Also the middle part (the reconstruction) is extremely slow,
-# and takes several hours, while Python runs same analysis in about 10 seconds. So it will be removed. Soon.
+# and takes several hours, while Python runs same analysis in about 10 seconds.
+#
+# Is about to be replaced by new draft_analysis.R
 # --------
 
 require(dplyr)
@@ -12,16 +15,17 @@ require(tidyr)
 myFolder <- "C:/Users/Sysadmin/Documents/draftsim" # There seems to be no good way to use relative addresses in R
 
 #fileDb <- c("Draftsim Ratings - RIX","Draftsim Ratings - XLN")
-#fileDb <- "Draftsim Ratings - DOM"
+fileDb <- "Draftsim Ratings - DOM"
 #fileDb <- "Draftsim Ratings - M19"
-fileDb <- "Draftsim Ratings - GRN"
+#fileDb <- "Draftsim Ratings - GRN"
 
-fileData <- "2018-02-23 Two days data from Draftsim.csv" # XLN
-#fileData <- "2018-04-16 Dominiaria initial data-2.csv"
+#fileData <- "2018-02-23 Two days data from Draftsim.csv" # XLN
+fileData <- "2018-04-16 Dominiaria initial data-2.csv"
 #fileData <- "2018-07-23 M19 drafts.csv"
 #fileData <- "2018-08-23 m19 drafts round 2.csv"
 #fileData <- "2018-10-05 GRN Draft Data 1.csv"
-currentSet <- "GRN" # Options for now: "M19" "DOM" "XLN"
+
+currentSet <- "DOM" # Options for now: "M19" "DOM" "XLN" "GRN"
 
 db <- NULL # Card database
 for(iFile in 1:length(fileDb)){
@@ -55,11 +59,10 @@ colorLetters <- c("w","u","b","r","g") # Mostly useful for debugging
 colorHist <- NULL        # All consecutive colors will be stored here, for stats
 
 if(1){ # So that the time measuring command would run together with the rest of the code when Ctrl-Entering
-  tic <- Sys.time()
+  timeTotal = 0;
   for(iSession in 1:100){ # Uncomment for testing
   #for(iSession in 1:nDrafts){ # For each session
     if(iSession %% 100 == 0) {cat(sprintf('%d of %d\n',iSession,nrow(d)))} # Reporting
-    
     temp <- sapply(d[iSession,]$h1,tolower)                # Lowercase everything
     s <- setNames(data.frame(strsplit(as.character(temp),",")),"name") # Get human hand (h1), explode by commas
     s <- inner_join(s,dplyr::select(db,name,id,w,u,b,r,g),by="name") # Full list of cards
@@ -70,6 +73,7 @@ if(1){ # So that the time measuring command would run together with the rest of 
       iid <- s[iCard,]$id                            # This card's id
       colorVec <- colorVec + c(s[iCard,]$w,s[iCard,]$u,s[iCard,]$b,s[iCard,]$r,s[iCard,]$g)
       freq[iid] <- freq[iid]+1
+      tic <- Sys.time() # Put before element that is timed
       if(iCard>1) {                                  # in R for-loops can run from 1 to 0, so need this check
         for(jCard in 1:(iCard-1)){                   # For every other card (for every pair)
           jid <- s[jCard,]$id                        # Other card's id
@@ -79,27 +83,25 @@ if(1){ # So that the time measuring command would run together with the rest of 
             pairs[[jid,iid]]=pairs[[jid,iid]]+1
         }
       }
+      timeTotal = timeTotal+as.numeric(difftime(Sys.time(), tic, units = "secs")) # Put after element that is timed
     }
     color1 <- which.max(colorVec)   # First color
     colorVec[color1] <- 0
     color2 <- which.max(colorVec)   # Second color
     guild[color1,color2] <- guild[color1,color2]+1
     colorHist[iSession] <- color1   # Track history
-    
-    #iBooster = 1                                 # I used to have a for loop here, and I don't want to edit the formulas
-    #for(iCard in 1:13) {                         # The first 13 cards are always from one booster; after that all bets are off
-    #  iid <- s[(iBooster-1)*14+iCard,]$id        # This card's id
-    #  rank[iid] <- rank[iid] + iCard             # Running sum of ranks
-    #  if(iCard < 13){
-    #    for(jCard in (iCard+1):13){              # All cards that were picked after i
-    #      jid <- s[(iBooster-1)*14+jCard,]$id
-    #      prefs[[iid,jid]] = prefs[[iid,jid]]+1  # i was taken over j. This time i won
-    #    }
-    #  }
-    #}
   }
-  as.numeric(difftime(Sys.time(), tic, units = "secs"))
+  timeTotal
 }
+
+# Time budget for 100 drafts:
+# Total: 11 s (a lot)
+# data.frame(strsplit): 0.05 s
+# inner_join: 0.23 s
+# for(iCard) loop: 10 s
+# colorvec <- colorvec ... : 2 s
+# pairs[] update loop: 8 s
+# Conclusion: no single bottleneck; all loops are too slow to use. Python is inevitable.
 
 for(id in 1:nCards){
   rank[id] <- rank[id]/freq[id]                # From sum-ranks to average pick orders
