@@ -9,7 +9,7 @@ This is a collection of scripts to analyze draft logs from [Draftsim.com](http:/
 
 Code commentaries:
 
-* Basic analysis in R: [markdown notebook](draftsim_analysis.Rmd), and [the same thing rendered in HTML](http://htmlpreview.github.io/?https://github.com/khakhalin/MTG/blob/master/draftsim_analysis.nb.html) (with ggplot graphs and everything).
+* Basic analysis in R: [markdown notebook](writeup_intro.Rmd), and [the same thing rendered in HTML](http://htmlpreview.github.io/?https://github.com/khakhalin/MTG/blob/master/writeup_intro.nb.html) (with ggplot graphs and everything).
 
 To be continued!
 
