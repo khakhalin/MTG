@@ -26,6 +26,14 @@ latest_drafts <- TRUE
 # Loads in card database 
 all_cards <- load_card_db(file.path("data", "all_sets.json"))
 
+# Loads in standard decks
+angels <- load_deck_txt(file.path("decks", "standard_wmc", "Boros_Angels_Kon_Fai_Wu.txt"), all_cards)
+drakes <- load_deck_txt(file.path("decks", "standard_wmc", "Izzet_Drakes_by_Shahar_Shenhar.txt"), all_cards)
+tokens <- load_deck_txt(file.path("decks", "standard_wmc", "Selesnya_Tokens_by_Timothee_Jammot.txt"), all_cards)
+jeskai <- load_deck_txt(file.path("decks", "standard_wmc", "Jeskai_Control_by_Arnaud_Hocquemiller.txt"), all_cards)
+wr_aggro <- load_deck_txt(file.path("decks", "standard_wmc", "Boros_Aggro_by_Yuval_Zuckerman.txt"), all_cards)
+gb_aggro <- load_deck_txt(file.path("decks", "standard_wmc", "Golgari_Aggro_by_Jean-Emmanuel_Depraz.txt"), all_cards)
+
 # Loads in draftsim data, formats it, subsets DB to current set, and gets all human drafts
 all_drafts <- data.frame()
 subset_db <- NA
