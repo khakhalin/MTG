@@ -367,9 +367,13 @@ load_deck_txt <- function(file, card_db) {
   first_card <- TRUE
   exclude_cols <- c("variations", "watermark", "names")
   mainboard <- TRUE
+<<<<<<< HEAD
   
   for (i in 1:length(lines)) {
     line <- lines[i]
+=======
+  for (line in lines) {
+>>>>>>> 7e3ed57ed7034faa5ffcaff5cb2079eff5924f93
     if ((line == "") | (line == "Sideboard")) {
       mainboard <- FALSE
       next
@@ -395,12 +399,15 @@ load_deck_txt <- function(file, card_db) {
         df[col] <- NA
       }
       
+<<<<<<< HEAD
       # Ensures that rownames don't overlap
       print(card_info)
       row.names(card_info) <- as.character(i)
       print(row.names(card_info))
       print(row.names(card_info) %in% row.names(df))
       
+=======
+>>>>>>> 7e3ed57ed7034faa5ffcaff5cb2079eff5924f93
       # Adds previously un-encountered columns to card info and df
       df <- rbind(df, card_info)
     }
