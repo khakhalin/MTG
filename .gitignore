@@ -2,3 +2,5 @@
 \.ipynb_checkpoints/
 
 *.pyc
+
+Arseny/__pycache__/
