@@ -10,13 +10,13 @@ require(tidyr)
 
 myFolder <- "C:/Users/Sysadmin/Documents/draftsim/MTG-git/Arseny/" # There seems to be no good way to use relative addresses in R
 
-dist <- read.csv(file=paste(myFolder,"distances_GRN",".csv",sep=""), header=FALSE, sep=",")
+dist <- read.csv(file=paste(myFolder,"distances_RNA",".csv",sep=""), header=FALSE, sep=",")
 
 ndim <- 2  # Number of dimensions ot use
 
 fit <- cmdscale(dist,eig=TRUE, k=ndim) # Classical scaling
 
-scale <- read.csv(file=paste(myFolder,"basic_data_GRN",".csv",sep=""), header=TRUE, sep=",")
+scale <- read.csv(file=paste(myFolder,"basic_data_RNA",".csv",sep=""), header=TRUE, sep=",")
 
 if(ndim<3) {
   scale$x=fit$points[,1]
@@ -26,10 +26,10 @@ if(ndim<3) {
 }
 head(scale)
 
-scale <- mutate(scale,color = factor(color,levels=c("C","W","U","B","R","G","Multi")))
+scale <- mutate(scale,color = factor(color,levels=c("C","W","U","B","R","G","Multi"))) # Put in a more meaningful order
 scale <- filter(scale,freq>0)
 
-myColors <- c("gray","tan2","navyblue","black","red","green4","plum3")
+myColors <- c("gray50","tan2","navyblue","black","red","green4","plum3")
 
 # Clustering, only points
 ggplot(scale) + theme_bw() + geom_point(aes(x,y,color=color)) +
@@ -37,7 +37,10 @@ ggplot(scale) + theme_bw() + geom_point(aes(x,y,color=color)) +
   theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
         axis.text.y=element_blank(),
         panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks = element_blank()
+        )
 
 
 # Points and labels
@@ -46,9 +49,16 @@ require(ggrepel)
 ggplot(scale) + theme_bw() + geom_point(aes(x,y,color=color)) +
   scale_color_manual(values=c("gray","tan2","blue","black","red","green","purple")) +
   geom_text_repel(aes(x,y,label=name),size=2,box.padding = 0.01, point.padding = 0.01) +
-  xlab('') + ylab('') 
+  xlab('') + ylab('') + 
+  theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
+        axis.text.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks = element_blank()
+  )
 
-# Zoom in on the core
+# Zoom in on the core (if necessary)
 ggplot(scale) + theme_bw() + geom_point(aes(x,y,color=color)) +
   scale_color_manual(values=c("gray","tan2","blue","black","red","green","purple")) +
   geom_text_repel(aes(x,y,label=name),size=2,box.padding = 0.01, point.padding = 0.01) +
