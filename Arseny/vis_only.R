@@ -9,14 +9,15 @@ require(ggplot2)
 require(tidyr)
 
 myFolder <- "C:/Users/Sysadmin/Documents/draftsim/MTG-git/Arseny/" # There seems to be no good way to use relative addresses in R
+setName <- 'RNA'
 
-dist <- read.csv(file=paste(myFolder,"distances_RNA",".csv",sep=""), header=FALSE, sep=",")
+dist <- read.csv(file=paste(myFolder,"distances_",setName,".csv",sep=""), header=FALSE, sep=",")
 
 ndim <- 2  # Number of dimensions ot use
 
 fit <- cmdscale(dist,eig=TRUE, k=ndim) # Classical scaling
 
-scale <- read.csv(file=paste(myFolder,"basic_data_RNA",".csv",sep=""), header=TRUE, sep=",")
+scale <- read.csv(file=paste(myFolder,"basic_data_",setName,".csv",sep=""), header=TRUE, sep=",")
 
 if(ndim<3) {
   scale$x=fit$points[,1]
@@ -28,6 +29,8 @@ head(scale)
 
 scale <- mutate(scale,color = factor(color,levels=c("C","W","U","B","R","G","Multi"))) # Put in a more meaningful order
 scale <- filter(scale,freq>0)
+
+write.csv(scale,file = paste(myFolder,"R_output_",setName,".csv",sep=""),row.names=F)
 
 myColors <- c("gray50","tan2","navyblue","black","red","green4","plum3")
 
