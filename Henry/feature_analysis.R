@@ -15,7 +15,7 @@ for (p in packages) {
 setwd("/project/csbio/henry/Documents/projects/draftsim")
 
 # Loads in helper functions
-source(file.path("MTG", "src", "card_utilities.R"))
+source(file.path("MTG", "Henry", "card_utilities.R"))
 
 # Sets important parameters
 set <- "GRN"
@@ -33,6 +33,14 @@ tokens <- load_deck_txt(file.path("decks", "standard_wmc", "Selesnya_Tokens_by_T
 jeskai <- load_deck_txt(file.path("decks", "standard_wmc", "Jeskai_Control_by_Arnaud_Hocquemiller.txt"), all_cards)
 wr_aggro <- load_deck_txt(file.path("decks", "standard_wmc", "Boros_Aggro_by_Yuval_Zuckerman.txt"), all_cards)
 gb_aggro <- load_deck_txt(file.path("decks", "standard_wmc", "Golgari_Aggro_by_Jean-Emmanuel_Depraz.txt"), all_cards)
+
+# Gets feature vectors of standard decks
+angels_sum <- summarize_deck(angels)[1,]
+drakes_sum <- summarize_deck(drakes)[1,]
+tokens_sum <- summarize_deck(tokens)[1,]
+jeskai_sum <- summarize_deck(jeskai)[1,]
+wr_aggro_sum <- summarize_deck(wr_aggro)[1,]
+gb_aggro_sum <- summarize_deck(gb_aggro)[1,]
 
 # Loads in draftsim data, formats it, subsets DB to current set, and gets all human drafts
 all_drafts <- data.frame()
@@ -109,6 +117,23 @@ for (i in 1:nrow(human_features)) {
   }
 }
 
+# Gets closest strategy to each deck
+human_features$closest_strategy <- NA
+for (i in 1:nrow(human_features)) {
+  draft_deck <- human_features[i, 1:(ncol(human_features) - 7)]
+  angels_cor <- deck_cor(draft_deck, angels_sum[,1:(ncol(angels_sum) - 5)])
+  drakes_cor <- deck_cor(draft_deck, drakes_sum[,1:(ncol(drakes_sum) - 5)])
+  tokens_cor <- deck_cor(draft_deck, tokens_sum[,1:(ncol(tokens_sum) - 5)])
+  jeskai_cor <- deck_cor(draft_deck, jeskai_sum[,1:(ncol(jeskai_sum) - 5)])
+  wr_aggro_cor <- deck_cor(draft_deck, wr_aggro_sum[,1:(ncol(wr_aggro_sum) - 5)])
+  gb_aggro_cor <- deck_cor(draft_deck, gb_aggro_sum[,1:(ncol(gb_aggro_sum) - 5)])
+  strats <- c("Aggro" = max(wr_aggro_cor, gb_aggro_cor),
+              "Midrange" = max(angels_cor, tokens_cor),
+              "Control" = jeskai_cor,
+              "Tempo" = drakes_cor)
+  human_features$closest_strategy[i] = names(which.max(strats))
+}
+
 # Writes data to file
 write.table(human_features, file.path("data", paste0(set, "_deck_features.tsv")), sep = "\t", 
             row.names = FALSE, col.names = TRUE, quote = FALSE)
@@ -117,33 +142,69 @@ write.table(human_features, file.path("data", paste0(set, "_deck_features.tsv"))
 # PCA ANALYSIS
 #####
 
+# Sets colors
+pal <- c("W/G" = "#80c080", "B/G" = "#808000", "U/B" = "000080", "W/R" = "#ff8080", 
+         "U/R" = "800080", "none" = "gray", "U" = "blue", "U/B/G" = "#002a45", 
+         "R" = "red", "W/B/G" = "#466a46", "G" = "green", "W/R/G" = "#c06040", 
+         "U/B/R" = "#400040", "W" = "grey95", "R/G" = "#8c3a00", "W/U/R" = "#b973b9", 
+         "W/U" = "#7373ff", "W/B" = "#808080", "B/R" = "#800000", "U/G" = "#004673", 
+         "B" = "black", "W/U/B" = "#4040c0", "B/R/G" = "#463a00", "W/U/G" = "#3f798c",
+         "W/B/R" = "#804040", "U/R/G" = "#463a46")
+
 # Clusters decks using PCA on scaled data
-pca <- prcomp(human_features[1:(ncol(human_features) - 6)], scale = TRUE)
-pca_data <- data.frame(scale(as.matrix(human_features[1:(ncol(human_features) - 6)])) %*% pca$rotation[,1:2])
+pca <- prcomp(human_features[1:(ncol(human_features) - 7)], scale = TRUE)
+pca_data <- data.frame(scale(as.matrix(human_features[1:(ncol(human_features) - 7)])) %*% pca$rotation[,1:2])
 pca_data$dominant_color <- human_features$dominant_color
+pca_data$closest_strategy <- human_features$closest_strategy
 
 # Plots PCs
 ggplot(pca_data, aes(PC1, PC2)) +
-  geom_point(size = 1.5, alpha = 0.8, aes(color = dominant_color)) +
+  geom_point(size = 1.5, alpha = 0.6, aes(color = dominant_color, shape = closest_strategy)) +
   xlab("PC1") +
   ylab("PC2") +
-  labs(color = "Dominant colors") +
+  labs(color = "Dominant colors", shape = "Closest strategy") +
+  scale_colour_manual(values = pal) +
   theme_tufte(base_size = 14)
-ggsave(file.path("MTG", "plots", paste0(set, "_no_colors_pca.png")), dpi = 400, width = 8, height = 6)
+ggsave(file.path("MTG", "Henry", "plots", paste0(set, "_no_colors_pca.png")), 
+       dpi = 400, width = 8, height = 6)
+
+# Plots PCs with decks that don't map to certain colors removed
+pca_data <- pca_data[pca_data$dominant_color != "none",]
+ggplot(pca_data, aes(PC1, PC2)) +
+  geom_point(size = 1.5, alpha = 0.6, aes(color = dominant_color, shape = closest_strategy)) +
+  xlab("PC1") +
+  ylab("PC2") +
+  labs(color = "Dominant colors", shape = "Closest strategy") +
+  scale_colour_manual(values = pal) +
+  theme_tufte(base_size = 14)
+ggsave(file.path("MTG", "Henry", "plots", paste0(set, "_no_colors_filtered_pca.png")), 
+       dpi = 400, width = 8, height = 6)
 
 # Clusters decks using PCA on scaled data with colors added
-pca <- prcomp(human_features[1:(ncol(human_features) - 1)], scale = TRUE)
-pca_data <- data.frame(scale(as.matrix(human_features[1:(ncol(human_features) - 1)])) %*% pca$rotation[,1:2])
+pca <- prcomp(human_features[1:(ncol(human_features) - 2)], scale = TRUE)
+pca_data <- data.frame(scale(as.matrix(human_features[1:(ncol(human_features) - 2)])) %*% pca$rotation[,1:2])
 pca_data$dominant_color <- human_features$dominant_color
+pca_data$closest_strategy <- human_features$closest_strategy
 
 # Plots PCs
 ggplot(pca_data, aes(PC1, PC2)) +
-  geom_point(size = 1.5, alpha = 0.8, aes(color = dominant_color)) +
+  geom_point(size = 1.5, alpha = 0.6, aes(color = dominant_color, shape = closest_strategy)) +
   xlab("PC1") +
   ylab("PC2") +
-  labs(color = "Dominant colors") +
+  labs(color = "Dominant colors", shape = "Closest strategy") +
+  scale_colour_manual(values = pal) +
   theme_tufte(base_size = 14)
-ggsave(file.path("MTG", "plots", paste0(set, "_with_colors_pca.png")), dpi = 400, width = 8, height = 6)
+ggsave(file.path("MTG", "Henry", "plots", paste0(set, "_with_colors_pca.png")), 
+       dpi = 400, width = 8, height = 6)
 
-
-
+# Plots PCs with decks that don't map to certain colors removed
+pca_data <- pca_data[pca_data$dominant_color != "none",]
+ggplot(pca_data, aes(PC1, PC2)) +
+  geom_point(size = 1.5, alpha = 0.6, aes(color = dominant_color, shape = closest_strategy)) +
+  xlab("PC1") +
+  ylab("PC2") +
+  labs(color = "Dominant colors", shape = "Closest strategy") +
+  scale_colour_manual(values = pal) +
+  theme_tufte(base_size = 14)
+ggsave(file.path("MTG", "Henry", "plots", paste0(set, "_with_colors_filtered_pca.png")), 
+       dpi = 400, width = 8, height = 6)

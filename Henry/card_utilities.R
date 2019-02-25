@@ -1,3 +1,4 @@
+
 ###### 
 # UTILITY FUNCTIONS
 ######
@@ -183,9 +184,9 @@ summarize_deck_inner <- function(deck) {
     n <- sum(nonland$copies)
     all_cmc <- c()
     for(i in 1:nrow(nonland)) {
-      stats$avg_cmc <- stats$avg_cmc + (nonland$copies[i]/n)*nonland$cmc[i]
+      stats$avg_cmc <- stats$avg_cmc + (nonland$copies[i]/n)*nonland$convertedManaCost[i]
       for (j in 1:nonland$copies[i]) {
-        all_cmc <- c(all_cmc, nonland$cmc[i])
+        all_cmc <- c(all_cmc, nonland$convertedManaCost[i])
       }
     } 
     stats$sd_cmc <- sd(all_cmc)
@@ -277,7 +278,7 @@ summarize_archetype <- function(archetype, archetype_name) {
 }
 
 # Gets correlation between two decks
-deck_cor <- function(deck_1, deck_2, method = "cosine") {
+deck_cor <- function(deck_1, deck_2, method = "pearson") {
   deck_1 <- t(unname(as.vector(deck_1)))
   deck_2 <- t(unname(as.vector(deck_2)))
   if (method == "pearson") {
@@ -350,8 +351,6 @@ load_deck_string <- function(cards, card_db) {
   
   # Cleans certain values for annoying cards or categories and returns
   df <- clean_special_cases(df)
-  df$cmc <- df$convertedManaCost
-  df <- df[,!(colnames(df) %in% c("convertedManaCost"))]
   df$power <- as.numeric(df$power)
   df$tough <- as.numeric(df$toughness)
   df <- df[,!(colnames(df) %in% c("toughness"))]
@@ -365,7 +364,9 @@ load_deck_txt <- function(file, card_db) {
   lines <- readLines(file)
   df <- data.frame()
   first_card <- TRUE
-  exclude_cols <- c("variations", "watermark", "names")
+  exclude_cols <- c("variations", "watermark", "names", "foreignData", "legalities",
+                    "rulings", "printings", "hasFoil", "hasNonFoil", "flavorText",
+                    "frameVersion", "started")
   mainboard <- TRUE
   
   for (i in 1:length(lines)) {
@@ -395,14 +396,23 @@ load_deck_txt <- function(file, card_db) {
         df[col] <- NA
       }
       
-      # Ensures that rownames don't overlap
-      print(card_info)
-      row.names(card_info) <- as.character(i)
-      print(row.names(card_info))
-      print(row.names(card_info) %in% row.names(df))
-      
       # Adds previously un-encountered columns to card info and df
-      df <- rbind(df, card_info)
+      temp <- data.frame(matrix(NA, ncol = ncol(df), nrow = 1))
+      rownames(temp) <- as.character(i)
+      colnames(temp) <- colnames(df)
+      for (col in colnames(temp)) {
+        val <- card_info[1,col]
+        if (!(typeof(val) == "list")) {
+          temp[1,col] <- val
+        } else {
+          if (length(val[[1]]) == 0) {
+            temp[1,col] <- NA
+          } else {
+            temp[1,col] <- paste(val, collapse = ";")
+          }
+        }
+      }
+      df <- rbind(df, temp)
     }
   }
   
@@ -459,6 +469,10 @@ clean_special_cases <- function(deck) {
     deck[ind,]$toughness = 5
   }
   ind <- which(deck$name == "Crackling Drake")
+  if (length(ind) > 0) {
+    deck[ind,]$power = 3
+  }
+  ind <- which(deck$name == "Enigma Drake")
   if (length(ind) > 0) {
     deck[ind,]$power = 3
   }
