@@ -1,2 +1,2 @@
 # draftsimtools
-Machine learning tools for development of draftsim bots.
+Machine learning tools for development of draftsim bots!
