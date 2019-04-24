@@ -30,7 +30,8 @@ head(scale)
 scale <- mutate(scale,color = factor(color,levels=c("C","W","U","B","R","G","Multi"))) # Put in a more meaningful order
 scale <- filter(scale,freq>0)
 
-write.csv(scale,file = paste(myFolder,"R_output_",setName,".csv",sep=""),row.names=F)
+### Output. Hidden for now, to preserve good files
+# write.csv(scale,file = paste(myFolder,"R_output_",setName,".csv",sep=""),row.names=F)
 
 myColors <- c("gray50","tan2","navyblue","black","red","green4","plum3")
 
