@@ -9,7 +9,7 @@ require(ggplot2)
 require(tidyr)
 
 myFolder <- "C:/Users/Sysadmin/Documents/draftsim/MTG-git/Arseny/" # There seems to be no good way to use relative addresses in R
-setName <- 'RNA'
+setName <- 'DOM'
 
 dist <- read.csv(file=paste(myFolder,"distances_",setName,".csv",sep=""), header=FALSE, sep=",")
 
