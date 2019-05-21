@@ -1,9 +1,9 @@
 # draftsimtools
 draftsimtools is a python package that can help with the development of draftsim bots. 
 
-An example use case is shown in draftsimtools_interactive.ipynb:  
+An example use case is shown in draftsimtools_interactive.ipynb
 
-Helper functions are available in load.py:
+Helper functions are available in <b>load.py</b>:  
   ds.create_set(set_csv_path) - Read card and rating information. Returns pandas dataframe.  
   ds.fix_commas(set_var, drafts) - Remove problematic comma and quote characters from cardnames.  
   ds.create_rating_dict(set_df) - Store draft information as {"cardname" : [color_vector, rating]}. Useful for efficient rating updates.  
