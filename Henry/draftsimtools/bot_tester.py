@@ -17,14 +17,16 @@ class BotTester(object):
 
         Fields:
           self.drafts - a collection of multiple draft objects (list of list of list of cardnames)
-          self.correct - numpy array of all bot's correct choices compared to human picks
-          self.fuzzy_correct - numpy array of all bot's correct choices (if human pick in top 3 bot picks)
+          self.correct - DataFrame of all bots' correct choices compared to human picks
+          self.fuzzy_correct - DataFrame of all bots' correct choices (if human pick in top 3 bot picks)
+          self.card_acc - DataFrame of per-card accuracy metrics for all bots
         
         :param drafts: Attach a set of drafts to the BotTester
         """
         self.drafts = deepcopy(drafts)
         self.correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
         self.fuzzy_correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
+        self.card_acc = pd.DataFrame(columns = ['human_pick'])
 
         # Instantiates accuracy DataFrames with draft, pack and card info
         counter = 0
@@ -47,6 +49,7 @@ class BotTester(object):
         :param bot_names: List of bot names (strings) of the same size as the list of bots.
         """
 
+        # Fills in dataframes of correct choices
         temp_names = []
         for i in range(len(bots)):
             bot = bots[i]
@@ -64,13 +67,25 @@ class BotTester(object):
             self.correct[bot_name] = all_correct
             self.fuzzy_correct[bot_name] = all_fuzzy
 
-    def write_rating_dict(self, exact_filename = "exact_correct.tsv", fuzzy_filename = "fuzzy_correct.tsv"):
-        """Writes the correctness DataFrames to filenames.
+        # Fills in dataframes of per-card accuracies
+        unique_cards = np.sort(self.correct['human_pick'].unique())
+        self.card_acc['human_pick'] = unique_cards
+        for bot_name in bot_names:
+            accuracies = []
+            for human_pick in unique_cards:
+                all_picks = self.correct.loc[self.correct['human_pick'] == human_pick]
+                accuracies.append(all_picks[bot_name].sum() / all_picks.shape[0])
+            self.card_acc[bot_name] = accuracies
+
+    def write_evaluations(self, exact_filename = "exact_correct.tsv", fuzzy_filename = "fuzzy_correct.tsv", acc_filename = "card_accuracies.tsv"):
+        """Writes correctness and accuracy DataFrames to filenames.
         """
         self.correct.to_csv(exact_filename, sep = "\t", index = False)
         print("Wrote correct to: " + str(exact_filename))
         self.fuzzy_correct.to_csv(fuzzy_filename, sep = "\t", index = False)
         print("Wrote fuzzy_correct to: " + str(fuzzy_filename))
+        self.card_acc.to_csv(acc_filename, sep = "\t", index = False)
+        print("Wrote card_acc to: " + str(acc_filename))
     
     def is_bot_correct(self, pack, rating_list, fuzzy = False):
         """ Checks whether or not a bot's pick matches a human's pick.
