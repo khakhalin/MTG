@@ -24,7 +24,7 @@ def main():
     print("Done optimizing SGD bot")
 
     # Gets bot accuracy for some packs
-    testing_set = drafts[26:100]
+    testing_set = drafts[26:10000]
     tester = ds.BotTester(testing_set)
     tester.evaluate_bots([b], ["SGD"])
     tester.write_evaluations()
