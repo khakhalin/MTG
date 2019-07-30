@@ -56,7 +56,7 @@ class BotTester(object):
             all_correct = []
             all_fuzzy = []
             for j in range(len(self.drafts)):
-                bot.new_draft(self.drafts[i]) # AKh: Shoudln't it be j and not i? Seems like testing the same draft repeatedly
+                bot.new_draft(self.drafts[j]) # AKh: Shoudln't it be j and not i? Seems like testing the same draft repeatedly
                 for pack in bot.draft:        # AKh: bot.draft is deepcopied from new_draft arg; why use it here?
                     rating_list = bot.create_rating_list(pack) # AKh: it runs through packs
                     exact_correct = self.is_bot_correct(pack, rating_list)
