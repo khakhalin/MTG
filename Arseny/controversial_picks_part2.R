@@ -6,12 +6,13 @@ require(ggrepel)
 colorRarity <- c('black','red','gold2','gray50')
 colorColor <- c("gray","purple","tan2","blue","black","green","red") # Bobby's messed up sequence of colors
 
-plotTitle = 'RNA'
+plotTitle = 'WAR'
 
 #d <- read.csv("draftsim/jupyter/controversial_cards_m19.csv",header=T)
 #d <- read.csv("draftsim/jupyter/controversial_cards_grn.csv",header=T)
 #d <- read.csv("draftsim/jupyter/controversial_cards_data_onColor.csv",header=T)
-d <- read.csv("draftsim/data/controversial_cards_RNA.csv",header=T)
+#d <- read.csv("draftsim/data/controversial_cards_RNA.csv",header=T)
+d <- read.csv("draftsim/data/controversial_cards_WAR.csv",header=T)
 names(d)
 d <- subset(d,avg<16) # Remove weird cards that were never actually drafted
 d <- subset(d,rarity!='Basic Land')
@@ -19,7 +20,8 @@ d <- subset(d,rarity!='Basic Land')
 #dbot <- read.csv("draftsim/jupyter/controversial_cards_m19_bot.csv",header=T)
 #dbot <- read.csv("draftsim/jupyter/controversial_cards_grn_bot.csv",header=T)
 #dbot <- read.csv("draftsim/jupyter/controversial_cards_data_onColor.csv",header=T)
-dbot <- read.csv("draftsim/data/controversial_cards_RNA_bot.csv",header=T)
+#dbot <- read.csv("draftsim/data/controversial_cards_RNA_bot.csv",header=T)
+dbot <- read.csv("draftsim/data/controversial_cards_WAR_bot.csv",header=T)
 names(dbot)
 dbot <- subset(dbot,avg<16) # Remove weird cards that were never actually drafted
 dbot <- subset(dbot,rarity!='Basic Land')
@@ -71,7 +73,7 @@ sum(dbot$count*dbot$avg)/sum(dbot$count)
 nrow(d)
 nrow(dbot)
 
-dbot2 <- select(dbot,name,mbot=avg,vbot=var,countbot=count)
+dbot2 <- dbot %>% dplyr::select(name,mbot=avg,vbot=var,countbot=count)
 head(dbot)
 d <- inner_join(d,dbot2,by="name")
 head(d)
@@ -84,9 +86,9 @@ sum(d$count)
 sum(d$countbot)
 
 # Top controversial cards:
-d %>% arrange(-vadj) %>% top_n(12, vadj)  %>% select(name,rarity)
+d %>% arrange(-vadj) %>% top_n(12, vadj)  %>% dplyr::select(name,rarity)
 
-d %>% arrange(-vadj) %>% top_n(12, vadj)  %>% select(name)
+d %>% arrange(-vadj) %>% top_n(12, vadj)  %>% dplyr::select(name)
 
 # Top controversial commons:
 d %>% filter(rarity=="common") %>% arrange(-vadj) %>% top_n(12, vadj)  %>% select(name)
@@ -98,7 +100,7 @@ ggplot(d,aes(-madj,vadj)) + theme_bw() +
   geom_point(aes(color=rarity),alpha=0.8) +
   scale_color_manual(values=colorRarity) +
   xlab('Uniquely human love') + ylab('Uniquely human uncertainty') +
-  #geom_text_repel(aes(label=name),color='black',size=2,box.padding = 0.01, point.padding = 0.01) +
+  geom_text_repel(aes(label=name),color='black',size=2,box.padding = 0.01, point.padding = 0.01) +
   NULL
 
 # Direct comparison of pick orders

@@ -11,20 +11,24 @@ require(tidyr)
 myFolder <- "C:/Users/Sysadmin/Documents/draftsim/MTG-git/Arseny/" # There seems to be no good way to use relative addresses in R
 setName <- 'WAR'
 
-dist <- read.csv(file=paste(myFolder,"distances_",setName,".csv",sep=""), header=FALSE, sep=",")
+flag_recalc_distances <- 0
 
-ndim <- 2  # Number of dimensions ot use
 
-fit <- cmdscale(dist,eig=TRUE, k=ndim) # Classical scaling
 
 scale <- read.csv(file=paste(myFolder,"basic_data_",setName,".csv",sep=""), header=TRUE, sep=",")
 
-if(ndim<3) {
-  scale$x=fit$points[,1]
-  scale$y=fit$points[,2]
-} else {
-  scale <- data.frame(x=fit$points[,1],y=fit$points[,2],z=fit$points[,3])
+if(flag_recalc_distances){
+  dist <- read.csv(file=paste(myFolder,"distances_",setName,".csv",sep=""), header=FALSE, sep=",")
+  ndim <- 2  # Number of dimensions ot use
+  fit <- cmdscale(dist,eig=TRUE, k=ndim) # Classical scaling
+  if(ndim<3) {
+    scale$x=fit$points[,1]
+    scale$y=fit$points[,2]
+  } else {
+    scale <- data.frame(x=fit$points[,1],y=fit$points[,2],z=fit$points[,3])
+  }
 }
+
 head(scale)
 
 scale <- mutate(scale,color = factor(color,levels=c("C","W","U","B","R","G","Multi"))) # Put in a more meaningful order
