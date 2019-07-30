@@ -51,14 +51,14 @@ class BotTester(object):
 
         # Fills in dataframes of correct choices
         temp_names = []
-        for i in range(len(bots)):
+        for i in range(len(bots)): # AKh: better to rename to iBot
             bot = bots[i]
             all_correct = []
             all_fuzzy = []
             for j in range(len(self.drafts)):
-                bot.new_draft(self.drafts[i])
-                for pack in bot.draft:
-                    rating_list = bot.create_rating_list(pack)
+                bot.new_draft(self.drafts[i]) # AKh: Shoudln't it be j and not i? Seems like testing the same draft repeatedly
+                for pack in bot.draft:        # AKh: bot.draft is deepcopied from new_draft arg; why use it here?
+                    rating_list = bot.create_rating_list(pack) # AKh: it runs through packs
                     exact_correct = self.is_bot_correct(pack, rating_list)
                     fuzzy_correct = self.is_bot_correct(pack, rating_list, fuzzy = True)
                     all_correct.append(exact_correct[1])
@@ -69,7 +69,7 @@ class BotTester(object):
 
         # Fills in dataframes of per-card accuracies
         unique_cards = np.sort(self.correct['human_pick'].unique())
-        self.card_acc['human_pick'] = unique_cards
+        self.card_acc['human_pick'] = unique_cards # AKh: why this name? Shouldn't we call it 'card' or 'card_name'?
         for bot_name in bot_names:
             accuracies = []
             for human_pick in unique_cards:
