@@ -174,24 +174,25 @@ def sort_draft(single_draft):
     """
 
     #Extract picks from draft.
-    picks = single_draft[2:]
+    picks = single_draft[2:]  # PICKS is all drafted cards in a row, first human pile, then all bots; 3*ps cards in each pile
     pick_list = []
     
     #Get the pack size. 
-    ps = int(len(picks) / 24)
+    ps = int(len(picks) / 24) # 24=8*3: 8 players, 3 packs. PICKS is 3*8*packsize (ps) long.
 
     #Track all picks in pack 1.
-    for pick in range(ps):
-        cur_pick = []
-        for x in range(pick, (3*ps+1)*(ps-pick), 3*ps+1):
-            x = x % (24*ps)
-            cur_pick.append(picks[x])
-        pick_list.append(cur_pick)
+    for pick in range(ps):                                # For each card in the final pile, reconstruct the hand.
+        cur_pick = []                                     # A hand player was starting at, while picking PICKth card.
+        for x in range(pick, (3*ps+1)*(ps-pick), 3*ps+1): # Step size: 3ps to move to next player + 1 to get next card
+                                                          # If player2 drafted card at step2, player1 saw it at step1 etc.
+            x = x % (24*ps)                               # Cheat to avoid manual wrapping up after 8th pick.
+            cur_pick.append(picks[x])                     # Populate the hand
+        pick_list.append(cur_pick)                        # Save the hand
     
     #Track all picks in pack 2.
     for pick in range(ps):
         cur_pick = []
-        for x in range(ps+pick, (-3*ps+1)*(ps-1-pick), -3*ps+1):
+        for x in range(ps+pick, (-3*ps+1)*(ps-1-pick), -3*ps+1): # Same, but opposite direction, and PS deep in each pile
             x = x % (24*ps)
             cur_pick.append(picks[x])
         pick_list.append(cur_pick)
@@ -199,7 +200,7 @@ def sort_draft(single_draft):
     #Track all picks in pack 3.
     for pick in range(ps):
         cur_pick = []
-        for x in range(2*ps+pick, (3*ps+1)*(ps-pick), 3*ps+1):
+        for x in range(2*ps+pick, (3*ps+1)*(ps-pick), 3*ps+1):   # Again positive direction, 2*PS deep in the pile
             x = x % (24*ps)
             cur_pick.append(picks[x])            
         pick_list.append(cur_pick)        
