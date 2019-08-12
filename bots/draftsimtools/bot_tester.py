@@ -26,6 +26,7 @@ class BotTester(object):
         self.drafts = deepcopy(drafts)
         self.correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
         self.fuzzy_correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
+        self.rank_error = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
         self.card_acc = pd.DataFrame(columns = ['human_pick'])
 
         # Instantiates accuracy DataFrames with draft, pack and card info
@@ -36,6 +37,7 @@ class BotTester(object):
                 pack = draft[j]
                 self.correct.loc[counter] = [i + 1, j + 1, pack[0]]
                 self.fuzzy_correct.loc[counter] = [i + 1, j + 1, pack[0]]
+                self.rank_error.loc[counter] = [i + 1, j + 1, pack[0]]
                 counter = counter + 1
 
     def evaluate_bots(self, bots, bot_names):
@@ -51,25 +53,30 @@ class BotTester(object):
 
         # Fills in dataframes of correct choices
         temp_names = []
-        for i in range(len(bots)): # AKh: better to rename to iBot
-            bot = bots[i]
+        for bot_counter in range(len(bots)): # AKh: better to rename to iBot
+            bot = bots[bot_counter]
             all_correct = []
             all_fuzzy = []
-            for j in range(len(self.drafts)):
-                bot.new_draft(self.drafts[j])
-                for pack in bot.draft:        # AKh: bot.draft is deepcopied from new_draft arg; why use it here?
-                    rating_list = bot.create_rating_list(pack)
-                    exact_correct = self.is_bot_correct(pack, rating_list)
-                    fuzzy_correct = self.is_bot_correct(pack, rating_list, fuzzy = True)
+            all_rank_error = []
+            for draft in self.drafts:
+                collection = []
+                for pack in draft:
+                    pack_rank = bot.rank_pack([pack, collection])
+                    collection.append(bot.get_top_pick(pack_rank))
+                    exact_correct = self.is_bot_correct(pack, pack_rank)
+                    fuzzy_correct = self.is_bot_correct(pack, pack_rank, fuzzy = True)
+                    rank_error = self.get_rank_error(pack, pack_rank)
                     all_correct.append(exact_correct[1])
                     all_fuzzy.append(fuzzy_correct[1])
-            bot_name = bot_names[i]
+                    all_rank_error.append(rank_error[1])
+            bot_name = bot_names[bot_counter]
             self.correct[bot_name] = all_correct
             self.fuzzy_correct[bot_name] = all_fuzzy
+            self.rank_error[bot_name] = all_rank_error
 
         # Fills in dataframes of per-card accuracies
         unique_cards = np.sort(self.correct['human_pick'].unique())
-        self.card_acc['human_pick'] = unique_cards # Actually all card names; human_pick is just where they came from
+        self.card_acc['human_pick'] = unique_cards # All card names; human_pick is just where they came from
         for bot_name in bot_names:
             accuracies = []
             for human_pick in unique_cards:
@@ -77,33 +84,51 @@ class BotTester(object):
                 accuracies.append(all_picks[bot_name].sum() / all_picks.shape[0])
             self.card_acc[bot_name] = accuracies
 
-    def write_evaluations(self, exact_filename = "exact_correct.tsv", fuzzy_filename = "fuzzy_correct.tsv", acc_filename = "card_accuracies.tsv"):
+    def write_evaluations(self, exact_filename = "exact_correct.tsv", fuzzy_filename = "fuzzy_correct.tsv", 
+                          rank_error_filename = "rank_error.tsv", acc_filename = "card_accuracies.tsv"):
         """Writes correctness and accuracy DataFrames to filenames.
         """
         self.correct.to_csv(exact_filename, sep = "\t", index = False)
         print("Wrote correct to: " + str(exact_filename))
         self.fuzzy_correct.to_csv(fuzzy_filename, sep = "\t", index = False)
         print("Wrote fuzzy_correct to: " + str(fuzzy_filename))
+        self.rank_error.to_csv(rank_error_filename, sep = "\t", index = False)
+        print("Wrote rank_error to: " + str(rank_error_filename))
         self.card_acc.to_csv(acc_filename, sep = "\t", index = False)
         print("Wrote card_acc to: " + str(acc_filename))
     
-    def is_bot_correct(self, pack, rating_list, fuzzy = False):
+    def is_bot_correct(self, pack, pack_rank, fuzzy = False):
         """ Checks whether or not a bot's pick matches a human's pick.
         
         Returns a tuple of (cardname, bot_correct) for whether or not the
-        bot's top choice matched the user's choice. If fuzzy = True, then
-        instead the bot is correct if the user's choice is in bot's top 3
+        bot's top choice matched the human's choice. If fuzzy = True, then
+        instead the bot is correct if the human's choice is in bot's top 3
         """
         bot_correct = 0
-        rating_list = sorted(rating_list, key = itemgetter(1), reverse = True)
+        human_pick = pack[0]
+        pack_rank = sorted(pack_rank, key = pack_rank.get, reverse = True)
         if not fuzzy:
-            bot_pick = rating_list[0]
-            if pack[0] == bot_pick[0]:
+            bot_pick = pack_rank[0]
+            if human_pick == bot_pick:
                 bot_correct = 1
         elif fuzzy:
-            for i in range(min(len(rating_list), 3)):
-                bot_pick = rating_list[i]
-                if pack[0] == bot_pick[0]:
+            for i in range(min(len(pack_rank), 3)):
+                bot_pick = pack_rank[i]
+                if human_pick == bot_pick:
                     bot_correct = 1
-        return (pack[0], bot_correct)
+        return (human_pick, bot_correct)
+    
+    def get_rank_error(self, pack, pack_rank):
+        """ Checks the rank error between a bot pick and a human pick.
+        
+        Returns a tuple of (cardname, rank_error) for the rank of the human's choice. 
+        """
+        rank_error = 0
+        human_pick = pack[0]
+        pack_rank = sorted(pack_rank, key = pack_rank.get, reverse = True)
+        for card in pack_rank:
+            if card == human_pick:
+                break
+            rank_error += 1
+        return (pack[0], rank_error)
 
