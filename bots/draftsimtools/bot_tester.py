@@ -97,6 +97,12 @@ class BotTester(object):
         self.card_acc.to_csv(acc_filename, sep = "\t", index = False)
         print("Wrote card_acc to: " + str(acc_filename))
     
+    def report_evaluations(self):
+        '''Reports some minimal info on bot running results in the notebook,
+        good for quick troubleshooting'''
+        
+        print(np.mean(self.correct))
+    
     def is_bot_correct(self, pack, pack_rank, fuzzy = False):
         """ Checks whether or not a bot's pick matches a human's pick.
         
