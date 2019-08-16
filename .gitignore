@@ -6,3 +6,5 @@ Arseny/__pycache__/
 \.ipynb_checkpoints/
 
 bots/draftsimtools/__pycache__/
+
+bots/\.Rhistory
