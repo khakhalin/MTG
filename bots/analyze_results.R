@@ -4,8 +4,8 @@ library(dplyr)
 library(tidyr)
 
 # Sets working directory
-#setwd("~/Projects/draftsim/MTG/bots/") # Henry's computer
-setwd("~/Projects/MTG/MTG-git/bots/") # Arseny's computer
+#setwd("~/Projects/draftsim/MTG/bots/output_files/") # Henry's computer
+setwd("~/Projects/MTG/MTG-git/bots/output_files/") # Arseny's computer
 
 # Loads in data
 exact <- read.csv("exact_correct.tsv", sep = "\t")
@@ -16,6 +16,18 @@ card_acc <- read.csv("card_accuracies.tsv", sep = "\t")
 # Plots average differences in pick order. Makes sure that no
 # lines are drawn between the last pick on one pack and the 
 # first pick of the next pack by adding an additional group
+
+
+# Arseny's version:
+dsum <- gather(exact, bot, guess, -c(draft_num,pick_num,human_pick)) %>% 
+  group_by(bot,pick_num) %>% summarize(m=mean(guess))
+dsum <- dsum %>% mutate(pack=floor((pick_num-1)/15))
+ggplot(dsum, aes(pick_num,m,color=bot,group=interaction(pack,bot))) + 
+  geom_line()+geom_point()+
+  theme_classic()
+write.csv(dsum, file = "Henrys_bots_summary.csv")
+
+# Henry's version:
 exact_pick_order <- exact %>% 
   group_by(pick_num) %>%
   summarize(random_pick_acc = mean(RandomBot),
@@ -25,16 +37,6 @@ exact_pick_order <- exact %>%
          random_pick_acc, raredraft_pick_acc)
 exact_pick_order$line_group <- c(rep(1, 15), rep(2, 15), rep(3, 15))
 
-dsum <- gather(exact, bot, guess, -c(draft_num,pick_num,human_pick)) %>% 
-  group_by(bot,pick_num) %>% summarize(m=mean(guess))
-dsum <- dsum %>% mutate(pack=floor((pick_num-1)/15))
-
-# Arseny's version:
-ggplot(dsum, aes(pick_num,m,color=bot,group=interaction(pack,bot))) + 
-  geom_line()+geom_point()+
-  theme_classic()
-
-# Henry's version:
 ggplot(exact_pick_order, aes(x = factor(pick_num), y = accuracy, 
                              group = interaction(bot, line_group), 
                              color = bot, shape = bot)) +
