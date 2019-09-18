@@ -14,7 +14,7 @@ import torch
 from torch.utils.data.dataset import Dataset
 
 
-def create_set(path1, path2=None):
+def create_set(path1, path2=None, alphabetical=True):
     """Load set data from the draftsim ratings google doc.
 
     On the google doc, the ratings for the set should be exported as a tsv. 
@@ -25,6 +25,8 @@ def create_set(path1, path2=None):
     :param path1: Path a set spreadsheet saved as tsv.
 
     :param path2: (Optional) Path to supporting set spreadsheet saved as tsv.
+
+    :param alphabetical: If true, return card names in sorted order. 
 
     :return: A pandas dataframe containing set information. 
     """
@@ -37,7 +39,9 @@ def create_set(path1, path2=None):
         
     #Add color information to dataframe.
     add_color_vec(rd)
-    
+   
+    rd = rd.sort_values("Name").reset_index(drop=True)
+
     return rd
 
 def add_color_vec(rd):
