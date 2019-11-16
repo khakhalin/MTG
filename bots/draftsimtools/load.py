@@ -281,6 +281,39 @@ def drafts_to_tensor(drafts, le, pack_size=15):
     pick_tensor = np.int16(pick_tensor_list) #, device=device) Use default device.
     return pick_tensor
 
+def collection_pack_to_x(collection, pack, le):
+    """Generate x, input, as a row vector.
+    0:n     : collection vector
+              x[i]=n -> collection has n copies of card i
+    n:2n    : pack vector
+              0 -> card not in pack
+              1 -> card in pack
+              
+    :param collection: cardnames in collection list[string]
+    :param pack: cardnames in pack list[string]
+    :param le: label encoder
+    
+    :return: x vector
+    """
+    
+    # Initialize collection/cards in pack vector
+    cards_in_set = len(le.classes_)    
+    x = np.zeros([cards_in_set * 2], dtype = "int16")
+
+    # Fill in collection vector
+    collection_indices = le.transform(collection)
+    for ci in collection_indices:
+        x[ci] += 1
+
+    # Fill in pack vector
+    pack_indices = le.transform(pack)
+    for pi in pack_indices:
+        x[pi + cards_in_set] += 1
+
+    # Convert to Torch tensor
+    x = torch.Tensor(x).reshape(1, -1) # Include batch dimension.
+    return x
+
 #Drafts dataset class.
 class DraftDataset(Dataset):
     """Defines a draft dataset in PyTorch."""
@@ -367,6 +400,7 @@ def load_dataset(rating_path1, rating_path2, drafts_path):
     
     # Create a label encoder.
     le = create_le(cur_set["Name"].values)
+    temp = cur_set["Name"].values
     
     # Create drafts tensor. 
     drafts_tensor = drafts_to_tensor(drafts, le)
