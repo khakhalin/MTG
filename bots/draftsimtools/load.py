@@ -143,14 +143,13 @@ def load_drafts(draft_path):
 def fix_commas(set_var, drafts):
     """Removes commas and quotes from cardnames in set and draft variables.
 
+    Also makes basic lands unique,
+
     This is used to prevent issues with character conflicts.
 
-    :param set_var: Set variable with problematic characters.
-    
+    :param set_var: Set variable with problematic characters.   
     :param drafts: Draft data variable with problematic characters.
-
     :return set_var: Set variable with problematic characters removed.
-
     :return drafts: Draft data variable with problematic characters removed.
     """
     
@@ -167,9 +166,18 @@ def fix_commas(set_var, drafts):
     for name in comma_names:
         fixed_name = re.sub(",", "", name)
         drafts = re.sub(name, fixed_name, drafts)
+
+    #Make basic lands unique.
+    basic_land_suffixes = ["_1", "_2", "_3", "_4"]
+    for s in basic_land_suffixes:
+        drafts = re.sub(s, "", drafts)
         
     #Remove commas from set variable.
-    set_var["Name"] = [re.sub(",", "", name) for name in set_var["Name"]]
+    for removal_char in basic_land_suffixes + [","]:
+        set_var["Name"] = [re.sub(removal_char, "", name) for name in set_var["Name"]]
+    
+    #Make basic lands unique in set variables. 
+    set_var = set_var.drop_duplicates(subset=["Name"]).reset_index(drop=True)
     return set_var, drafts
 
 def sort_draft(single_draft):
@@ -400,7 +408,6 @@ def load_dataset(rating_path1, rating_path2, drafts_path):
     
     # Create a label encoder.
     le = create_le(cur_set["Name"].values)
-    temp = cur_set["Name"].values
     
     # Create drafts tensor. 
     drafts_tensor = drafts_to_tensor(drafts, le)
@@ -410,4 +417,3 @@ def load_dataset(rating_path1, rating_path2, drafts_path):
     
     # Get the tensor
     return cur_dataset, drafts_tensor, cur_set, le
-
