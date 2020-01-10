@@ -21,7 +21,7 @@ class ClassicBot(Bot):
     HYBRID = {'A' : 'WB', 'D' : 'UB', 'M' : 'UG', 'L' : 'RG', 'I' : 'BG',
               'V' : 'WB', 'S' : 'WR', 'Z' : 'UR', 'Y' : 'WG', 'K' : 'BR'}
     
-    def __init__(self, nameList):
+    def __init__(self, nameList, setRatingPath, landRatingPath):
         self.num_correct = 0
         self.num_total = 0
         self.nameList = nameList # a list with 'Name' column, containing card names and attributes
@@ -29,7 +29,7 @@ class ClassicBot(Bot):
         self.color_commitment = [0,0,0,0,0]
         self.eval_pack = []
         
-        self.card_set = create_set('bots_data/m19_rating.tsv', 'bots_data/m19_land_rating.tsv')
+        self.card_set = create_set(setRatingPath, landRatingPath)
         self.card_set['Name'] = self.card_set.Name.str.replace(',','')
         self.card_set = self.card_set.set_index('Name')
         #print(self.card_set.to_string())

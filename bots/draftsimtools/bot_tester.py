@@ -84,8 +84,8 @@ class BotTester(object):
                 accuracies.append(all_picks[bot_name].sum() / all_picks.shape[0])
             self.card_acc[bot_name] = accuracies
 
-    def write_evaluations(self, exact_filename = "output_files/exact_correct.tsv", fuzzy_filename = "output_files/fuzzy_correct.tsv", 
-                          rank_error_filename = "output_files/rank_error.tsv", acc_filename = "output_files/card_accuracies.tsv"):
+    def write_evaluations(self, exact_filename = "exact_correct.tsv", fuzzy_filename = "fuzzy_correct.tsv", 
+                          rank_error_filename = "rank_error.tsv", acc_filename = "card_accuracies.tsv"):
         """Writes correctness and accuracy DataFrames to filenames.
         """
         self.correct.to_csv(exact_filename, sep = "\t", index = False)

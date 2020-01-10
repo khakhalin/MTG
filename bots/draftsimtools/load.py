@@ -14,7 +14,7 @@ import torch
 from torch.utils.data.dataset import Dataset
 
 
-def create_set(path1, path2=None):
+def create_set(path1, path2=None, alphabetical=True):
     """Load set data from the draftsim ratings google doc.
 
     On the google doc, the ratings for the set should be exported as a tsv. 
@@ -25,6 +25,8 @@ def create_set(path1, path2=None):
     :param path1: Path a set spreadsheet saved as tsv.
 
     :param path2: (Optional) Path to supporting set spreadsheet saved as tsv.
+
+    :param alphabetical: If true, return card names in sorted order. 
 
     :return: A pandas dataframe containing set information. 
     """
@@ -37,7 +39,9 @@ def create_set(path1, path2=None):
         
     #Add color information to dataframe.
     add_color_vec(rd)
-    
+   
+    rd = rd.sort_values("Name").reset_index(drop=True)
+
     return rd
 
 def add_color_vec(rd):
@@ -139,14 +143,13 @@ def load_drafts(draft_path):
 def fix_commas(set_var, drafts):
     """Removes commas and quotes from cardnames in set and draft variables.
 
+    Also makes basic lands unique,
+
     This is used to prevent issues with character conflicts.
 
-    :param set_var: Set variable with problematic characters.
-    
+    :param set_var: Set variable with problematic characters.   
     :param drafts: Draft data variable with problematic characters.
-
     :return set_var: Set variable with problematic characters removed.
-
     :return drafts: Draft data variable with problematic characters removed.
     """
     
@@ -163,9 +166,18 @@ def fix_commas(set_var, drafts):
     for name in comma_names:
         fixed_name = re.sub(",", "", name)
         drafts = re.sub(name, fixed_name, drafts)
+
+    #Make basic lands unique.
+    basic_land_suffixes = ["_1", "_2", "_3", "_4"]
+    for s in basic_land_suffixes:
+        drafts = re.sub(s, "", drafts)
         
     #Remove commas from set variable.
-    set_var["Name"] = [re.sub(",", "", name) for name in set_var["Name"]]
+    for removal_char in basic_land_suffixes + [","]:
+        set_var["Name"] = [re.sub(removal_char, "", name) for name in set_var["Name"]]
+    
+    #Make basic lands unique in set variables. 
+    set_var = set_var.drop_duplicates(subset=["Name"]).reset_index(drop=True)
     return set_var, drafts
 
 def sort_draft(single_draft):
@@ -277,6 +289,39 @@ def drafts_to_tensor(drafts, le, pack_size=15):
     pick_tensor = np.int16(pick_tensor_list) #, device=device) Use default device.
     return pick_tensor
 
+def collection_pack_to_x(collection, pack, le):
+    """Generate x, input, as a row vector.
+    0:n     : collection vector
+              x[i]=n -> collection has n copies of card i
+    n:2n    : pack vector
+              0 -> card not in pack
+              1 -> card in pack
+              
+    :param collection: cardnames in collection list[string]
+    :param pack: cardnames in pack list[string]
+    :param le: label encoder
+    
+    :return: x vector
+    """
+    
+    # Initialize collection/cards in pack vector
+    cards_in_set = len(le.classes_)    
+    x = np.zeros([cards_in_set * 2], dtype = "int16")
+
+    # Fill in collection vector
+    collection_indices = le.transform(collection)
+    for ci in collection_indices:
+        x[ci] += 1
+
+    # Fill in pack vector
+    pack_indices = le.transform(pack)
+    for pi in pack_indices:
+        x[pi + cards_in_set] += 1
+
+    # Convert to Torch tensor
+    x = torch.Tensor(x).reshape(1, -1) # Include batch dimension.
+    return x
+
 #Drafts dataset class.
 class DraftDataset(Dataset):
     """Defines a draft dataset in PyTorch."""
@@ -372,4 +417,3 @@ def load_dataset(rating_path1, rating_path2, drafts_path):
     
     # Get the tensor
     return cur_dataset, drafts_tensor, cur_set, le
-
