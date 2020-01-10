@@ -14,5 +14,4 @@ Code commentaries:
 
 To be continued!
 
-![rotating cube](https://draftsim.com/blog/wp-content/uploads/2018/08/rotating-m19-cube.gif)
->>>>>>> f4d3f3357512da462e66d7ba7cf0fe2427b26bcf
+![rotating cube](https://draftsim.com/wp-content/uploads/2018/08/rotating-m19-cube.gif)
