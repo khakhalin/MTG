@@ -15,6 +15,7 @@ from .raredraft_bot import *
 from .classic_bot import *
 from .nnet_architecture import *
 from .nnet_bot import *
+from .bayes_bot import *
 
 # from . import bots # As of Aug 5, generates an error. Is it obsolete now?
 
