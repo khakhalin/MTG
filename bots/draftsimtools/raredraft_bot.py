@@ -1,4 +1,5 @@
 from .bot import *
+import numpy as np
 
 
 # --- Naive bot (drafts like a 5-years-old)
@@ -41,7 +42,8 @@ class RaredraftBot(Bot):
         """
         
         # Initializes pack ranking and separates pack from collection
-        pack_rank = {x:0 for x in draft_frame[0]}
+        r = np.random.uniform(low=0, high=0.9, size=len(draft_frame[0]))
+        pack_rank = {draft_frame[0][i]:r[i] for i in range(len(draft_frame[0]))}
         pack = draft_frame[0]
         collection = draft_frame[1]
         
