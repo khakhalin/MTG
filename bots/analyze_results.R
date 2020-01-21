@@ -4,7 +4,7 @@ library(dplyr)
 library(tidyr)
 
 # Sets working directory
-setwd("../") # Henry's computer
+setwd("~/../Documents/Projects/Draftsim/MTG/bots") # Henry's computer
 #setwd("~/Projects/MTG/MTG-git/bots/output_files/") # Arseny's computer
 
 # Loads in data
