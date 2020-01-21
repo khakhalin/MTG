@@ -1,4 +1,5 @@
 import numpy as np
+import datetime
 import pandas as pd
 from operator import itemgetter
 from copy import deepcopy
@@ -53,6 +54,7 @@ class BotTester(object):
 
         # Fills in dataframes of correct choices
         temp_names = []
+        before = datetime.datetime.now()
         for bot_counter in range(len(bots)): # AKh: better to rename to iBot
             bot = bots[bot_counter]
             all_correct = []
@@ -73,6 +75,9 @@ class BotTester(object):
             self.correct[bot_name] = all_correct
             self.fuzzy_correct[bot_name] = all_fuzzy
             self.rank_error[bot_name] = all_rank_error
+            current = datetime.datetime.now() 
+            print(bot_name + " time taken: " + str(current - before))
+            before = current
 
         # Fills in dataframes of per-card accuracies
         unique_cards = np.sort(self.correct['human_pick'].unique())
