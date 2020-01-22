@@ -28,7 +28,7 @@ ggplot(dsum, aes(pick_num,m,color=bot,group=interaction(pack,bot))) +
   geom_smooth(se=F)+ # Loess
   geom_point() +
   xlab("Pick number") +
-  ylab("Average exact accuracy") +
+  ylab("Average top-one accuracy") +
   labs(color = "Bot") +
   theme_classic(base_size = 20) +
   scale_color_brewer(palette="Set1") +
