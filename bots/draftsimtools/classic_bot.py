@@ -52,8 +52,9 @@ class ClassicBot(Bot):
         
     def __get_ranking(self, draft_frame):
         pack = draft_frame[0]
-        collection = draft_frame[1]        
-        evaluated_pack = [self.get_color_bias(card, self.get_color_commitment(collection)) + 
+        collection = draft_frame[1] 
+        color_commit = self.get_color_commitment(collection)
+        evaluated_pack = [self.get_color_bias(card, color_commit) + 
                           float(self.card_set.loc[card]['Rating']) for card in pack]
         self.eval_pack = evaluated_pack              
         return {draft_frame[0][i]:evaluated_pack[i] for i in range(len(pack))}

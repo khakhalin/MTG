@@ -24,22 +24,14 @@ class BotTester(object):
         
         :param drafts: Attach a set of drafts to the BotTester
         """
-        self.drafts = deepcopy(drafts)
-        self.correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
-        self.fuzzy_correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
-        self.rank_error = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'])
+        before = datetime.datetime.now()
+        self.drafts = drafts
+        self.n_packs = len(drafts)*45
+        self.correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'], index = range(self.n_packs))
+        self.fuzzy_correct = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'], index = range(self.n_packs))
+        self.rank_error = pd.DataFrame(columns = ['draft_num', 'pick_num', 'human_pick'], index = range(self.n_packs))
         self.card_acc = pd.DataFrame(columns = ['human_pick'])
-
-        # Instantiates accuracy DataFrames with draft, pack and card info
-        counter = 0
-        for i in range(len(self.drafts)):
-            draft = self.drafts[i]
-            for j in range(len(draft)):
-                pack = draft[j]
-                self.correct.loc[counter] = [i + 1, j + 1, pack[0]]
-                self.fuzzy_correct.loc[counter] = [i + 1, j + 1, pack[0]]
-                self.rank_error.loc[counter] = [i + 1, j + 1, pack[0]]
-                counter = counter + 1
+        print("Initialization time taken: " + str(datetime.datetime.now() - before))
 
     def evaluate_bots(self, bots, bot_names):
         """Evaluates accuracy and fuzzy accuracy of a list of bots. 
@@ -52,25 +44,51 @@ class BotTester(object):
         :param bot_names: List of bot names (strings) of the same size as the list of bots.
         """
 
+        # Checks if we need to initialize dataframes
+        initialize = np.isnan(self.correct.iloc[0,2])
+
         # Fills in dataframes of correct choices
         temp_names = []
         before = datetime.datetime.now()
+        static_cols = ['draft_num', 'pick_num', 'human_pick']
         for bot_counter in range(len(bots)): # AKh: better to rename to iBot
             bot = bots[bot_counter]
-            all_correct = []
-            all_fuzzy = []
-            all_rank_error = []
-            for draft in self.drafts:
+            all_correct = [None]*self.n_packs
+            all_fuzzy = all_correct.copy()
+            all_rank_error = all_correct.copy()
+            pack_counter = 0
+            for draft_num in range(len(self.drafts)):
+                draft = self.drafts[draft_num]
                 collection = []
-                for pack in draft:
+                for pick_num in range(len(draft)):
+                    pack = draft[pick_num]
+
+                    # Stores draft and pick number in dataframes if uninitialized
+                    if initialize: 
+                        self.correct.loc[pack_counter, static_cols]  = [draft_num + 1, pick_num + 1, pack[0]]
+                        self.fuzzy_correct.loc[pack_counter, static_cols] = [draft_num + 1, pick_num + 1, pack[0]]
+                        self.rank_error.loc[pack_counter, static_cols] = [draft_num + 1, pick_num + 1, pack[0]]
+
+                    # Gets bot ranking on the current pack
                     pack_rank = bot.rank_pack([pack, collection])
                     collection.append(bot.get_top_pick(pack_rank))
+
+                    # Gets top-one and top-three accuracy for the current pack
                     exact_correct = self.is_bot_correct(pack, pack_rank)
                     fuzzy_correct = self.is_bot_correct(pack, pack_rank, fuzzy = True)
                     rank_error = self.get_rank_error(pack, pack_rank)
-                    all_correct.append(exact_correct[1])
-                    all_fuzzy.append(fuzzy_correct[1])
-                    all_rank_error.append(rank_error[1])
+
+                    # Stores accuracy in dataframes
+                    all_correct[pack_counter] = exact_correct[1]
+                    all_fuzzy[pack_counter] = fuzzy_correct[1]
+                    all_rank_error[pack_counter] = rank_error[1]
+                    pack_counter += 1
+
+            # Only initializes dataframe values once
+            if initialize:
+                initialize = False
+
+            # Stores accuracy info in a single column of existing dataframes
             bot_name = bot_names[bot_counter]
             self.correct[bot_name] = all_correct
             self.fuzzy_correct[bot_name] = all_fuzzy
