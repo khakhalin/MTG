@@ -1,13 +1,14 @@
 from .bot import *
+import numpy as np
 
 
 # --- Naive bot (drafts like a 5-years-old)
 class RaredraftBot(Bot):
     
-    def __init__(self, nameList):
+    def __init__(self, card_set):
         self.num_correct = 0
         self.num_total = 0
-        self.nameList = nameList # a list with 'Name' column, containing card names and attributes
+        self.card_set = card_set # a list with 'Name' column, containing card names and attributes
         
     def rank_pack(self, draft_frame):
         """
@@ -41,32 +42,34 @@ class RaredraftBot(Bot):
         """
         
         # Initializes pack ranking and separates pack from collection
-        pack_rank = {x:0 for x in draft_frame[0]}
+        r = np.random.uniform(low=0, high=0.9, size=len(draft_frame[0]))
+        pack_rank = {draft_frame[0][i]:r[i] for i in range(len(draft_frame[0]))}
         pack = draft_frame[0]
         collection = draft_frame[1]
         
         # Gets current color 
         color_stats = {'W':0, 'U':0, 'B':0, 'R':0, 'G':0}
         if (len(collection) > 0):
-            collection_colors = self.nameList[self.nameList["Name"].isin(collection)].colors
+            collection_colors = self.card_set[self.card_set["Name"].isin(collection)]["Casting Cost 1"]
             collection_colors = list(color for color in collection_colors)
             for card_colors in collection_colors:
                 for color in card_colors:
-                    color_stats[color] += 1
+                    if color in color_stats:
+                        color_stats[color] += 1
         current_color = max(color_stats, key = color_stats.get) 
         
         # Makes the pick based on rarity
-        pack_rarity = self.nameList[self.nameList["Name"].isin(pack)]
-        mythics = pack_rarity["Name"][pack_rarity.rarity.str[0] == 'm'] # mythics
+        pack_rarity = self.card_set[self.card_set["Name"].isin(pack)]
+        mythics = pack_rarity["Name"][pack_rarity.Rarity.str[0] == 'M'] # mythics
         for card in mythics:
             pack_rank[card] += 10
-        rares = pack_rarity["Name"][pack_rarity.rarity.str[0] == 'r'] # rares
+        rares = pack_rarity["Name"][pack_rarity.Rarity.str[0] == 'R'] # rares
         for card in rares:
             pack_rank[card] += 5
-        uncommons = pack_rarity["Name"][pack_rarity.rarity.str[0] == 'u'] # uncommons
+        uncommons = pack_rarity["Name"][pack_rarity.Rarity.str[0] == 'U'] # uncommons
         for card in uncommons:
             pack_rank[card] += 2
-        on_color = list(current_color in color for color in pack_rarity.colors) # on-color bonus
+        on_color = list(current_color in color for color in pack_rarity["Casting Cost 1"]) # on-color bonus
         on_color = pack_rarity[on_color]["Name"]
         for card in on_color:
             pack_rank[card] += 1
