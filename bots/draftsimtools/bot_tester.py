@@ -47,6 +47,11 @@ class BotTester(object):
         # Checks if we need to initialize dataframes
         initialize = np.isnan(self.correct.iloc[0,2])
 
+        # Builds up static values as lists to later add to dataframes
+        draft_num_list = [None]*self.n_packs
+        pick_num_list = [None]*self.n_packs
+        human_pick_list = [None]*self.n_packs
+
         # Fills in dataframes of correct choices
         temp_names = []
         before = datetime.datetime.now()
@@ -65,9 +70,9 @@ class BotTester(object):
 
                     # Stores draft and pick number in dataframes if uninitialized
                     if initialize: 
-                        self.correct.loc[pack_counter, static_cols]  = [draft_num + 1, pick_num + 1, pack[0]]
-                        self.fuzzy_correct.loc[pack_counter, static_cols] = [draft_num + 1, pick_num + 1, pack[0]]
-                        self.rank_error.loc[pack_counter, static_cols] = [draft_num + 1, pick_num + 1, pack[0]]
+                        draft_num_list[pack_counter] = draft_num + 1
+                        pick_num_list[pack_counter] = pick_num + 1
+                        human_pick_list[pack_counter] = pack[0]
 
                     # Gets bot ranking on the current pack
                     pack_rank = bot.rank_pack([pack, collection])
@@ -86,6 +91,15 @@ class BotTester(object):
 
             # Only initializes dataframe values once
             if initialize:
+                self.correct['draft_num'] = draft_num_list
+                self.correct['pick_num'] = pick_num_list
+                self.correct['human_pick'] = human_pick_list
+                self.fuzzy_correct['draft_num'] = draft_num_list
+                self.fuzzy_correct['pick_num'] = pick_num_list
+                self.fuzzy_correct['human_pick'] = human_pick_list
+                self.rank_error['draft_num'] = draft_num_list
+                self.rank_error['pick_num'] = pick_num_list
+                self.rank_error['human_pick'] = human_pick_list
                 initialize = False
 
             # Stores accuracy info in a single column of existing dataframes
