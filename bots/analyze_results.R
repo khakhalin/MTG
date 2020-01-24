@@ -4,8 +4,8 @@ library(dplyr)
 library(tidyr)
 
 # Sets working directory
-#setwd("~/../Documents/Projects/Draftsim/MTG/bots") # Henry's computer
-setwd("~/Projects/MTG/MTG-git/bots/output_files/") # Arseny's computer
+setwd("~/../Documents/Projects/Draftsim/MTG/bots/output_files") # Henry's computer
+#setwd("~/Projects/MTG/MTG-git/bots/output_files/") # Arseny's computer
 
 # Loads in data
 exact <- read.csv("exact_correct.tsv", sep = "\t")
@@ -33,6 +33,6 @@ ggplot(dsum, aes(pick_num,m,color=bot,group=interaction(pack,bot))) +
   theme_classic(base_size = 20) +
   scale_color_brewer(palette="Set1") +
   NULL
-write.csv(dsum, file = "Henrys_bots_summary.csv")
+write.csv(dsum, file = "bot_summaries.csv")
 ggsave("pick_order_accuracy.png", width = 10, height = 7)
 
