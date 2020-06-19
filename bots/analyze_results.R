@@ -12,7 +12,8 @@ exact <- read.csv("exact_correct.tsv", sep = "\t")
 fuzzy <- read.csv("fuzzy_correct.tsv", sep = "\t")
 rank_error <- read.csv("rank_error.tsv", sep = "\t")
 card_acc <- read.csv("card_accuracies.tsv", sep = "\t")
-ratings <- read.csv("../../../data/standardized_m19/standardized_m19_rating.tsv", sep = "\t")
+ratings <- read.csv("../../../data/standardized_m19/standardized_m19_rating.tsv", sep = "\t", stringsAsFactors = FALSE)
+ratings$Rating <- as.numeric(ratings$Rating)
 
 # Appends card ratings to card accuracy values
 card_acc$ratings <- ratings$Rating
