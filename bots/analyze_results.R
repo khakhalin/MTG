@@ -9,7 +9,6 @@ setwd("~/../Documents/Projects/Draftsim/MTG/bots/output_files") # Henry's comput
 
 # Loads in data
 exact <- read.csv("exact_correct.tsv", sep = "\t")
-fuzzy <- read.csv("fuzzy_correct.tsv", sep = "\t")
 rank_error <- read.csv("rank_error.tsv", sep = "\t")
 card_acc <- read.csv("card_accuracies.tsv", sep = "\t")
 ratings <- read.csv("../../../data/standardized_m19/standardized_m19_rating.tsv", sep = "\t", stringsAsFactors = FALSE)
@@ -18,9 +17,55 @@ ratings$Rating <- as.numeric(ratings$Rating)
 # Appends card ratings to card accuracy values
 card_acc$ratings <- ratings$Rating
 
-# Plots average differences in pick order. Makes sure that no
-# lines are drawn between the last pick on one pack and the 
-# first pick of the next pack by adding an additional group
+# Plots overall accuracy across all drafts
+draft_acc <- select(exact, -c(pick_num, human_pick))
+draft_acc <- draft_acc %>% 
+  gather(bot, correct, RandomBot:NNetBot) %>% 
+  group_by(draft_num, bot) %>% summarize(draft_acc = sum(correct) / 45)
+draft_acc$bot <- factor(draft_acc$bot, levels = c("RandomBot", "RaredraftBot", "BayesBot", "ClassicBot", "NNetBot"))
+ggplot(draft_acc, aes(x = bot, y = draft_acc)) +
+  geom_boxplot() +
+  xlab("Drafting bot") +
+  ylab("Per-draft top-one accuracy") +
+  theme_tufte(base_size = 20)
+ggsave("overall_accuracy.png", width = 10, height = 7)
+
+# Prints mean accuracy
+mean(draft_acc$draft_acc[draft_acc$bot == "RandomBot"])
+mean(draft_acc$draft_acc[draft_acc$bot == "RaredraftBot"])
+mean(draft_acc$draft_acc[draft_acc$bot == "BayesBot"])
+mean(draft_acc$draft_acc[draft_acc$bot == "ClassicBot"])
+mean(draft_acc$draft_acc[draft_acc$bot == "NNetBot"])
+
+# Computes one-way ANOVA and Tukey comparisons between all draft accuracies
+anova_results <- aov(draft_acc ~ bot, data = draft_acc)
+summary(anova_results)
+TukeyHSD(anova_results)
+
+# Plots overall rank error across all drafts
+draft_error <- select(rank_error, -c(pick_num, human_pick, RandomBot))
+draft_error <- draft_error %>% 
+  gather(bot, error, RaredraftBot:NNetBot) %>% 
+  group_by(draft_num, bot) %>% summarize(draft_error = sum(error) / 45)
+draft_error$bot <- factor(draft_error$bot, levels = c("RaredraftBot", "BayesBot", "ClassicBot", "NNetBot"))
+ggplot(draft_error, aes(x = bot, y = draft_error)) +
+  geom_boxplot() +
+  xlab("Drafting bot") +
+  ylab("Per-draft pick distance") +
+  theme_tufte(base_size = 20)
+ggsave("overall_distance.png", width = 10, height = 7)
+
+# Prints mean accuracy
+mean(draft_error$draft_error[draft_error$bot == "RandomBot"])
+mean(draft_error$draft_error[draft_error$bot == "RaredraftBot"])
+mean(draft_error$draft_error[draft_error$bot == "BayesBot"])
+mean(draft_error$draft_error[draft_error$bot == "ClassicBot"])
+mean(draft_error$draft_error[draft_error$bot == "NNetBot"])
+
+# Computes one-way ANOVA and Tukey comparisons between all draft accuracies
+anova_results <- aov(draft_error ~ bot, data = draft_error)
+summary(anova_results)
+TukeyHSD(anova_results)
 
 # Plots accuracy by pick order
 dsum <- gather(exact, bot, guess, -c(draft_num,pick_num,human_pick)) %>% 
@@ -47,7 +92,6 @@ pick_ranks <- pick_ranks %>% mutate(pack=floor((pick_num-1)/15))
 
 # Gets cards in each pack
 pick_ranks$cards_in_pack <- rev(((pick_ranks$pick_num - 1) %% 15) + 1)
-
 ggplot(pick_ranks, aes(pick_num,m,color=bot,group=interaction(pack,bot))) + 
   geom_smooth(se=F)+ # Loess
   geom_point() +
