@@ -1,13 +1,8 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %% [markdown]
-# # DraftNet Development
-# daniel.brooks@alumni.caltech.edu <br>
-# Jan 18, 2020 <br>  
-# 
+# NNetBot Training
+# daniel.brooks@alumni.caltech.edu and henry.neil.ward@gmail.com
+# June 23, 2020 <br>  
 
-# %%
-#Preprocessing imports.
+# Preprocessing imports
 import numpy as np
 import os
 import pandas as pd
@@ -15,19 +10,22 @@ import pickle
 from sklearn import preprocessing
 from tqdm import tqdm
 
+# Draftsim and NNetBot architecture import
 import draftsimtools as ds
+from draftsimtools import DraftNet
 
-
-# %%
-#Torch imports.
+# Torch imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data.dataset import Dataset
 
+######
+# UTILITY FUNCTIONS
+######
 
-# %%
+# Loads pickled data
 def load_data(path):
     """
     Load a pickle file from disk. 
@@ -35,11 +33,21 @@ def load_data(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
-# %% [markdown]
-# ### Load data from standardized directory.
+######
+# PARAMETER SETTING
+######
 
-# %%
+# Sets folder where training data lives
 data_folder = "../bots/bots_data/nnet_train/"
+
+# Sets additional parameters
+num_epochs = 1
+use_features = False
+device = torch.device("cpu")
+
+######
+# DATA LOADING
+######
 
 # Makes label encoder
 m19_set = pd.read_csv(data_folder + 'standardized_m19_rating.tsv', delimiter="\t")
@@ -66,19 +74,13 @@ train_dataset = ds.DraftDataset(drafts_tensor_train, le)
 drafts_tensor_test = load_data(data_folder + 'drafts_tensor_test.pkl')
 test_dataset = ds.DraftDataset(drafts_tensor_test, le)
 
-# %% [markdown]
-# # Load the Dataset
+######
+# NNET UTILITY FUNCTIONS
+######
 
-# %%
-# Toggle GPU/CPU mode.
-device = torch.device("cpu") # Use CPU device for saving model.
-#device = torch.device("cuda:0")
-
-
-# %%
 def create_set_vector(casting_cost, card_type, rarity, color_vector):
     """
-    Returns a one hot encoded card property vector. 
+    Returns a feature-encoded card property vector. 
     
     There are 21 binary features:
     
@@ -110,10 +112,10 @@ def create_set_vector(casting_cost, card_type, rarity, color_vector):
     "param color_vector": vector corresponding to colors of card, example: [1,0,0,0,1]
     
     """
-    # Initialize set vector.
+    # Initialize set vector
     v = [0] * 21
     
-    # Encode cmc. 
+    # Encode cmc
     if casting_cost == 0:
         v[0] = 1
     elif casting_cost == 1:
@@ -133,11 +135,11 @@ def create_set_vector(casting_cost, card_type, rarity, color_vector):
     else:
         print("WARNING: Undefined casting cost.")
     
-    # Encode type.
+    # Encode type
     if card_type == "Creature":
         v[8] = 1
         
-    # Encode rarity.
+    # Encode rarity
     if rarity == "C":
         v[9] = 1
     elif rarity == "U":
@@ -147,7 +149,7 @@ def create_set_vector(casting_cost, card_type, rarity, color_vector):
     elif rarity == "M":
         v[12] = 1
     
-    # Process number of colors.
+    # Process number of colors
     num_colors = len([c for c in color_vector if c > 0])
     if num_colors == 0:
         v[13] = 1
@@ -156,7 +158,7 @@ def create_set_vector(casting_cost, card_type, rarity, color_vector):
     elif num_colors >= 2:
         v[15] = 1
     
-    # Process card color. 
+    # Process card color
     if color_vector[0] > 0:
         v[16] = 1
     if color_vector[1] > 0:
@@ -169,8 +171,6 @@ def create_set_vector(casting_cost, card_type, rarity, color_vector):
         v[20] = 1
     return v
 
-
-# %%
 def cmc_from_string(cmc_string):
     """
     Return an integer converted mana cost from cmc_string. 
@@ -180,11 +180,11 @@ def cmc_from_string(cmc_string):
     :param cmc_string: String or integer representation of cmc. Example: "1UBR".
     :returns: Integer cmc. Example: 4.
     """
-    # If int, we are done. 
+    # If int, we are done
     if type(cmc_string) is int:
         return cmc_string
     
-    # Convert string to integer cmc.
+    # Convert string to integer cmc
     cmc = 0
     digit_string = ""
     letters = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -199,8 +199,6 @@ def cmc_from_string(cmc_string):
         cmc += int(digit_string)
     return cmc
 
-
-# %%
 def create_set_tensor(magic_set):
     """
     Returns a set tensor which represents the properties of cards in the set.
@@ -211,129 +209,28 @@ def create_set_tensor(magic_set):
     """
     set_list = []
     
-    # Requires these names to be present in the set file.
+    # Requires these names to be present in the set file 
     reduced_set = magic_set[["Name", "Casting Cost 1", "Card Type", "Rarity", "Color Vector"]]
     for index, row in reduced_set.iterrows():
         card_vector = create_set_vector(cmc_from_string(row[1]), row[2], row[3], row[4])
         set_list.append(card_vector)
         
-    # set_list is currently N x M list of lists. 
+    # set_list is currently N x M list of lists 
     set_flipped = torch.Tensor(set_list)
     set_tensor = torch.transpose(set_flipped, 0, 1)
     return set_tensor
 
+######
+# NNET TRAINING FUNCTIONS
+######
 
-# %%
-# Set tensor.
-st = create_set_tensor(m19_set)
-if device.type != "cpu":
-    st = st.cuda()
-print(st.shape)
-
-# %% [markdown]
-# # Define the NN
-
-# %%
-#Implement NN.
-class DraftNet(nn.Module):
-    
-    def __init__(self, set_tensor, use_features = False):
-        """Placeholder NN. Currently does nothing.
-        
-        param ss: number of cards in set
-        param set_tensor: Mxss set tensor describing the set
-        """
-        super(DraftNet, self).__init__()
-        
-        # Specifies whether we train with features or not
-        self.use_features = use_features
-
-        # Load set tensor.
-        self.set_tensor = set_tensor
-        self.set_tensor_tranpose = torch.transpose(set_tensor, 0, 1)
-        self.M, self.ss = self.set_tensor.shape
-        self.half_ss = self.ss / 2
-        
-        # Specify layer sizes. 
-        size_in = self.ss
-        if use_features:
-            size_in = self.ss + self.M
-        size1 = self.ss
-        size2 = self.ss
-        size3 = self.ss
-        size4 = self.ss
-        size5 = self.ss
-        size6 = self.ss
-        size7 = self.ss
-        size8 = self.ss
-        
-        self.ns = 0.01
-        
-        self.bn = nn.BatchNorm1d(self.ss)
-        if use_features:
-            self.bn = nn.BatchNorm1d(self.ss + self.M)
-        
-        self.linear1 = torch.nn.Linear(size_in, size1)
-        self.bn1 = nn.BatchNorm1d(size1)
-        self.relu1 = torch.nn.LeakyReLU(negative_slope = self.ns)
-        self.dropout1 = nn.Dropout(0.5)
-        
-        self.linear2 = torch.nn.Linear(size1, size2)
-        self.bn2 = nn.BatchNorm1d(size2)
-        self.relu2 = torch.nn.LeakyReLU(negative_slope = self.ns)
-        self.dropout2 = nn.Dropout(0.5)
-        
-        self.linear3 = torch.nn.Linear(size2, size3)
-        self.bn3 = nn.BatchNorm1d(size3)
-        self.relu3 = torch.nn.LeakyReLU(negative_slope = self.ns)
-        self.dropout3 = nn.Dropout(0.5)
-        
-        self.linear4 = torch.nn.Linear(size3, size4)
-        self.relu4 = torch.nn.LeakyReLU(negative_slope = self.ns)
-                
-    def forward(self, x):
-        
-        collection = x[:, :self.ss]
-        pack = x[:, self.ss:]
-        
-        # Get features from set tensor if specified
-        if self.use_features:
-            features = torch.mm(collection, self.set_tensor_tranpose)
-            collection_and_features = torch.cat((collection, features), 1)
-            collection_and_features = self.bn(collection_and_features)
-            collection = collection_and_features
-        
-        y = self.linear1(collection)
-        y = self.bn1(y)
-        y = self.relu1(y)
-        y = self.dropout1(y)
-        
-        y = self.linear2(y)
-        y = self.bn2(y)
-        y = self.relu2(y)
-        y = self.dropout2(y)
-        
-        y = self.linear3(y)
-        y = self.bn3(y)
-        y = self.relu3(y)
-        y = self.dropout3(y)
-
-        y = self.linear4(y)
-        
-        y = y * pack # Enforce cards in pack only.        
-        return y
-
-# %% [markdown]
-# # Define training and validation
-
-# %%
 def train_net(net, dataloader, num_epoch, optimizer):
     """Train the network."""
     net.train()    
     my_count = 0
     for epoch in range(num_epoch):
         
-        # Loop over x,y for each dataset.
+        # Loop over x,y for each dataset
         running_loss = 0
         for i, data in enumerate(dataloader):
         
@@ -341,36 +238,34 @@ def train_net(net, dataloader, num_epoch, optimizer):
             if my_count % 10000 == 0:
                 print(my_count)
         
-            # Get the inputs. Keeps batch size.
+            # Get the inputs, keeping batch size
             x, y = data
             
-            # cuda() is needed for GPU mode. Not sure why.
+            # cuda() is needed for GPU mode, not sure why
             if device.type != "cpu":
                 x = x.cuda()
-                y = y.cuda() # One-hot encoded. 
+                y = y.cuda() # Feature vector
             
-            # Zero parameter gradients between batches.
+            # Zero parameter gradients between batches
             optimizer.zero_grad()
         
-            # Perform training.
+            # Perform training
             y_pred = net(x)
-            y_integer = torch.argmax(y, 1) # Class indices.
+            y_integer = torch.argmax(y, 1) # Class indices
             
-            # Use cross entropy loss. 
+            # Use cross entropy loss 
             loss = torch.nn.CrossEntropyLoss()
             output = loss(y_pred, y_integer)
             output.backward()
             optimizer.step()
                         
-            # Print loss data.
+            # Print loss data
             running_loss += output.item()
             step = 1
             if i % len(dataloader) == len(dataloader)-1 and (epoch + 1) % step == 0:
                 print('Train Cross-Entropy Loss: %.6f' % (running_loss/len(dataloader)))
                 running_loss = 0.0
 
-
-# %%
 def val_net(net, dataloader):
     """Compute accuracy on validation set."""
     net.eval()
@@ -380,20 +275,20 @@ def val_net(net, dataloader):
     with torch.no_grad():
         for i, data in enumerate(dataloader):
         
-            # Get the inputs. Keeps batch size.
+            # Get the inputs, keeping batch size
             x, y = data
             
-            # cuda() is needed for GPU mode. Not sure why.
+            # cuda() is needed for GPU mode, not sure why
             if device.type != "cpu":
                 x = x.cuda()
                 y = y.cuda()
-            y_integer = torch.argmax(y, 1) # Class indices.
+            y_integer = torch.argmax(y, 1) # Class indices
             
-            # Compute val loss.
+            # Compute val loss
             y_pred = net(x)
             y_pred_integer = torch.argmax(y_pred, 1)
             
-            # Compute accuracy. 
+            # Compute accuracy
             correct += int(sum(y_pred_integer == y_integer))
             total += len(y_integer)
             
@@ -401,11 +296,16 @@ def val_net(net, dataloader):
     print("Validation accuracy:", accuracy, " Total picks:", int(total))
     return accuracy
 
-# %% [markdown]
-# # Trains networks
+######
+# MAIN SCRIPT
+######
 
-# %%
-# Define dataloaders for whole datasets
+# Makes set tensor
+st = create_set_tensor(m19_set)
+if device.type != "cpu":
+    st = st.cuda()
+
+# Define dataloaders for complete datasets
 trainloader = torch.utils.data.DataLoader(train_dataset, batch_size=100, shuffle=True)
 testloader = torch.utils.data.DataLoader(test_dataset, batch_size=100, shuffle=False)
 
@@ -417,79 +317,70 @@ split2_val_loader = torch.utils.data.DataLoader(split2_val, batch_size=100, shuf
 split3_train_loader = torch.utils.data.DataLoader(split3_train, batch_size=100, shuffle=True)
 split3_val_loader = torch.utils.data.DataLoader(split3_val, batch_size=100, shuffle=False)
 
-# Create networks
-split1_net = DraftNet(st)
-split2_net = DraftNet(st)
-split3_net = DraftNet(st)
-final_net = DraftNet(st)
+# Creates networks
+split1_net = DraftNet(st, use_features = use_features)
+split2_net = DraftNet(st, use_features = use_features)
+split3_net = DraftNet(st, use_features = use_features)
+final_net = DraftNet(st, use_features = use_features)
 if device.type != "cpu":
-    split1_net = net.cuda()
-    split2_net = net.cuda()
-    split3_net = net.cuda()
-    final_net = net.cuda()
+    split1_net = split1_net.cuda()
+    split2_net = split2_net.cuda()
+    split3_net = split3_net.cuda()
+    final_net = final_net.cuda()
 
-# %% [markdown]
-# After loading the data, we first train the network on three different splits of the training data to get 3-fold cross-validated training accuracies.
+# Makes optimizers
+optimizer1 = optim.Adam(split1_net.parameters(), lr=0.001, betas=(0.9, 0.999))
+optimizer2 = optim.Adam(split2_net.parameters(), lr=0.001, betas=(0.9, 0.999))
+optimizer3 = optim.Adam(split3_net.parameters(), lr=0.001, betas=(0.9, 0.999))
 
-# %%
-# Makes optimizer
-optimizer1 = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999))
-optimizer2 = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999))
-optimizer3 = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999))
-
-# Trains network on three splits of training data
+# Trains network on three splits of training data to get 3-fold cross-validated training accuracies
 ep = 1
 val_acc1 = []
 val_acc2 = []
 val_acc3 = []
-for run in range(25):
+for run in range(num_epochs):
     print("Split 1 epoch:", ep)
     train_net(split1_net, split1_train_loader, 1, optimizer1)
     val_acc1.append(val_net(split1_net, split1_val_loader))
     ep += 1
-for run in range(25):
+torch.save(split1_net, "bots_data/draftnet_split1_june23_2020_ep.pt")
+ep = 1
+for run in range(num_epochs):
     print("Split 2 epoch:", ep)
     train_net(split2_net, split2_train_loader, 1, optimizer2)
     val_acc2.append(val_net(split2_net, split2_val_loader))
     ep += 1
-for run in range(25):
+torch.save(split2_net, "bots_data/draftnet_split2_june23_2020_ep.pt")
+ep = 1
+for run in range(num_epochs):
     print("Split 3 epoch:", ep)
     train_net(split3_net, split3_train_loader, 1, optimizer3)
     val_acc3.append(val_net(split3_net, split3_val_loader))
     ep += 1
+torch.save(split3_net, "bots_data/draftnet_split3_june23_2020_ep.pt")
 
-
-# %%
 # Joins validation accuracies to dataframe and writes to file
 val_accuracies = pd.DataFrame(
     {'split1_acc': val_acc1,
      'split2_acc': val_acc2,
      'split3_acc': val_acc3
     })
-val_accuracies.to_csv('val_accuracies.csv', index=False)
-
-# %% [markdown]
-# Finally, we train the network on the entire training dataset and save the results.
-
-# %%
-# Makes optimizer
-optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999))
+val_accuracies.to_csv('bots_data/val_accuracies.csv', index=False)
 
 # Trains final network on entire dataset
+optimizer = optim.Adam(final_net.parameters(), lr=0.001, betas=(0.9, 0.999))
 ep = 1
 test_acc = []
-for run in range(25):
+for run in range(num_epochs):
     print("Epoch:", ep)
     train_net(final_net, trainloader, 1, optimizer)
     test_acc.append(val_net(final_net, testloader))
-    torch.save(final_net, "draftnet_june22_2020_ep" + str(ep)  + ".pt")
+    #torch.save(final_net, "draftnet_june23_2020_ep" + str(ep)  + ".pt")
     ep += 1
 
-
-# %%
-# Writes final network and test accuracies to file
-torch.save(net, "draftnet_june22_2020_ep.pt")
-with open('test_accuracies.txt', 'w') as f:
+# Writes final network and test accuracy to file
+torch.save(final_net, "bots_data/draftnet_june23_2020_ep.pt")
+with open('bots_data/test_accuracies.txt', 'w') as f:
     for line in test_acc:
         f.write("%s\n" % line)
 
