@@ -41,7 +41,7 @@ def load_data(path):
 data_folder = "../bots/bots_data/nnet_train/"
 
 # Sets additional parameters
-num_epochs = 1
+num_epochs = 20
 use_features = False
 device = torch.device("cpu")
 
