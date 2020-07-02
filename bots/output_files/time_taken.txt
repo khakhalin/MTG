@@ -1,0 +1,19 @@
+Initialization time taken: 0:00:00.679217
+RandomBot time taken: 0:00:12.281149
+RaredraftBot time taken: 0:56:59.431039
+ClassicBot time taken: 2:13:15.162764
+BayesBot time taken: 0:33:56.349807
+NNetBot time taken: 2:01:42.934555
+Total time taken for 21590 drafts: 5:48:24.123738
+draft_num       10795.500000
+pick_num           23.000000
+RandomBot           0.221328
+RaredraftBot        0.305400
+ClassicBot          0.445421
+BayesBot            0.433580
+NNetBot             0.486668
+dtype: float64
+Wrote correct to: output_files/exact_correct.tsv
+Wrote fuzzy_correct to: output_files/fuzzy_correct.tsv
+Wrote rank_error to: output_files/rank_error.tsv
+Wrote card_acc to: output_files/card_accuracies.tsv

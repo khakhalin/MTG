@@ -8,16 +8,16 @@ library(RColorBrewer)
 setwd("~/../Documents/Projects/Draftsim/MTG/bots/output_files") # Henry's computer
 #setwd("~/Projects/MTG/MTG-git/bots/output_files/") # Arseny's computer
 
-# Sets explicit colors for each bot
-pal <- brewer.pal(5, "Set1")
-names(pal) <- colnames(card_acc[2:(ncol(card_acc)-1)])
-
 # Loads in data
 exact <- read.csv("exact_correct.tsv", sep = "\t")
 rank_error <- read.csv("rank_error.tsv", sep = "\t")
 card_acc <- read.csv("card_accuracies.tsv", sep = "\t")
 ratings <- read.csv("../../../data/standardized_m19/standardized_m19_rating.tsv", sep = "\t", stringsAsFactors = FALSE)
 ratings$Rating <- as.numeric(ratings$Rating)
+
+# Sets explicit colors for each bot
+pal <- brewer.pal(5, "Set1")
+names(pal) <- colnames(card_acc[2:ncol(card_acc)])
 
 # Appends card ratings to card accuracy values
 card_acc$ratings <- ratings$Rating
