@@ -2,6 +2,7 @@ library(ggplot2)
 library(ggthemes)
 library(dplyr)
 library(tidyr)
+library(RColorBrewer)
 
 # Sets working directory
 setwd("~/../Documents/Projects/Draftsim/MTG/bots/output_files") # Henry's computer
@@ -13,6 +14,10 @@ rank_error <- read.csv("rank_error.tsv", sep = "\t")
 card_acc <- read.csv("card_accuracies.tsv", sep = "\t")
 ratings <- read.csv("../../../data/standardized_m19/standardized_m19_rating.tsv", sep = "\t", stringsAsFactors = FALSE)
 ratings$Rating <- as.numeric(ratings$Rating)
+
+# Sets explicit colors for each bot
+pal <- brewer.pal(5, "Set1")
+names(pal) <- colnames(card_acc[2:ncol(card_acc)])
 
 # Appends card ratings to card accuracy values
 card_acc$ratings <- ratings$Rating
@@ -27,7 +32,7 @@ ggplot(draft_acc, aes(x = bot, y = draft_acc)) +
   geom_boxplot() +
   xlab("Drafting bot") +
   ylab("Per-draft top-one accuracy") +
-  theme_tufte(base_size = 20)
+  theme_classic(base_size = 20)
 ggsave("overall_accuracy.png", width = 10, height = 7)
 
 # Prints mean accuracy
@@ -52,7 +57,7 @@ ggplot(draft_error, aes(x = bot, y = draft_error)) +
   geom_boxplot() +
   xlab("Drafting bot") +
   ylab("Per-draft pick distance") +
-  theme_tufte(base_size = 20)
+  theme_classic(base_size = 20) 
 ggsave("overall_distance.png", width = 10, height = 7)
 
 # Prints mean accuracy
@@ -80,7 +85,7 @@ ggplot(dsum, aes(pick_num,m,color=bot,group=interaction(pack,bot))) +
   ylab("Average top-one accuracy") +
   labs(color = "Bot") +
   theme_classic(base_size = 20) +
-  scale_color_brewer(palette="Set1")
+  scale_color_manual(name = "Bot", values = pal)
 write.csv(dsum, file = "bot_summaries.csv")
 ggsave("pick_order_accuracy.png", width = 10, height = 7)
 
@@ -99,7 +104,7 @@ ggplot(pick_ranks, aes(pick_num,m,color=bot,group=interaction(pack,bot))) +
   ylab("Average rank error") +
   labs(color = "Bot") +
   theme_classic(base_size = 20) +
-  scale_color_brewer(palette="Set1")
+  scale_color_manual(name = "Bot", values = pal)
 ggsave("pick_ranks_unnormalized.png", width = 10, height = 7)
 ggplot(pick_ranks, aes(pick_num,m/cards_in_pack,color=bot,group=interaction(pack,bot))) + 
   geom_smooth(se=F)+ # Loess
@@ -108,7 +113,7 @@ ggplot(pick_ranks, aes(pick_num,m/cards_in_pack,color=bot,group=interaction(pack
   ylab("Pack size-normalized average rank error") +
   labs(color = "Bot") +
   theme_classic(base_size = 20) +
-  scale_color_brewer(palette="Set1")
+  scale_color_manual(name = "Bot", values = pal)
 ggsave("pick_ranks_normalized.png", width = 10, height = 7)
 
 # Plots card ratings against bot accuracies
@@ -120,8 +125,8 @@ ggplot(card_df, aes(x = ratings, y = acc, color = bot)) +
   xlab("Draftsim rating") +
   ylab("Per-card accuracy") +
   labs(color = "Bot") +
-  theme_tufte(base_size = 20) +
-  scale_color_brewer(palette="Set1")
+  theme_classic(base_size = 20) +
+  scale_color_manual(name = "Bot", values = pal)
 ggsave("card_ratings_vs_accuracy.png", width = 10, height = 7)
 
 
