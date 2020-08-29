@@ -6,7 +6,7 @@ require(dplyr)
 require(ggplot2)
 require(tidyr)
 
-myFolder <- "C:/Users/Sysadmin/Documents/draftsim"
+myFolder <- "C:/Users/khakh/Documents/Projects/MTG"
 
 load(paste(myFolder,'/scale XLN.RData',sep=''))
 temp <- scale
@@ -32,8 +32,8 @@ allCards <- rbind(allCards,temp)
 
 allCards <- mutate(allCards,set=factor(set,levels=c('XLN','DOM','M19','GRN'))) # Put sets in correct order
 
-myColors <- c("gray","tan2","blue","black","red","green","purple")
-ggplot(allCards) + theme_minimal() + geom_point(aes(x,y,color=color)) +
+myColors <- c("gray","tan2","blue","black","red","chartreuse3","purple")
+ggplot(allCards) + theme_minimal() + geom_point(aes(x,y,color=color), alpha=0.5) +
   scale_color_manual(values=myColors) + xlab('') + ylab('') +
   theme(axis.text.x=element_blank(),         # Empty ticks, no gridlines
         axis.text.y=element_blank(),
