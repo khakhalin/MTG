@@ -15,6 +15,11 @@ card_acc <- read.csv("card_accuracies.tsv", sep = "\t")
 ratings <- read.csv("../../../data/standardized_m19/standardized_m19_rating.tsv", sep = "\t", stringsAsFactors = FALSE)
 ratings$Rating <- as.numeric(ratings$Rating)
 
+# Corrects DraftsimBot name
+colnames(exact)[colnames(exact) == "ClassicBot"] <- "DraftsimBot"
+colnames(rank_error)[colnames(rank_error) == "ClassicBot"] <- "DraftsimBot"
+colnames(card_acc)[colnames(card_acc) == "ClassicBot"] <- "DraftsimBot"
+
 # Sets explicit colors for each bot
 pal <- brewer.pal(5, "Set1")
 names(pal) <- colnames(card_acc[2:ncol(card_acc)])
@@ -27,7 +32,7 @@ draft_acc <- select(exact, -c(pick_num, human_pick))
 draft_acc <- draft_acc %>% 
   gather(bot, correct, RandomBot:NNetBot) %>% 
   group_by(draft_num, bot) %>% summarize(draft_acc = sum(correct) / 45)
-draft_acc$bot <- factor(draft_acc$bot, levels = c("RandomBot", "RaredraftBot", "BayesBot", "ClassicBot", "NNetBot"))
+draft_acc$bot <- factor(draft_acc$bot, levels = c("RandomBot", "RaredraftBot", "BayesBot", "DraftsimBot", "NNetBot"))
 ggplot(draft_acc, aes(x = bot, y = draft_acc)) +
   geom_boxplot() +
   xlab("Drafting bot") +
@@ -39,7 +44,7 @@ ggsave("overall_accuracy.png", width = 10, height = 7)
 mean(draft_acc$draft_acc[draft_acc$bot == "RandomBot"])
 mean(draft_acc$draft_acc[draft_acc$bot == "RaredraftBot"])
 mean(draft_acc$draft_acc[draft_acc$bot == "BayesBot"])
-mean(draft_acc$draft_acc[draft_acc$bot == "ClassicBot"])
+mean(draft_acc$draft_acc[draft_acc$bot == "DraftsimBot"])
 mean(draft_acc$draft_acc[draft_acc$bot == "NNetBot"])
 
 # Computes one-way ANOVA and Tukey comparisons between all draft accuracies
@@ -52,7 +57,7 @@ draft_error <- select(rank_error, -c(pick_num, human_pick, RandomBot))
 draft_error <- draft_error %>% 
   gather(bot, error, RaredraftBot:NNetBot) %>% 
   group_by(draft_num, bot) %>% summarize(draft_error = sum(error) / 45)
-draft_error$bot <- factor(draft_error$bot, levels = c("RaredraftBot", "BayesBot", "ClassicBot", "NNetBot"))
+draft_error$bot <- factor(draft_error$bot, levels = c("RaredraftBot", "BayesBot", "DraftsimBot", "NNetBot"))
 ggplot(draft_error, aes(x = bot, y = draft_error)) +
   geom_boxplot() +
   xlab("Drafting bot") +
@@ -64,7 +69,7 @@ ggsave("overall_distance.png", width = 10, height = 7)
 mean(draft_error$draft_error[draft_error$bot == "RandomBot"])
 mean(draft_error$draft_error[draft_error$bot == "RaredraftBot"])
 mean(draft_error$draft_error[draft_error$bot == "BayesBot"])
-mean(draft_error$draft_error[draft_error$bot == "ClassicBot"])
+mean(draft_error$draft_error[draft_error$bot == "DraftsimBot"])
 mean(draft_error$draft_error[draft_error$bot == "NNetBot"])
 
 # Computes one-way ANOVA and Tukey comparisons between all draft accuracies
