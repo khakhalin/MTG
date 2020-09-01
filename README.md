@@ -1,7 +1,7 @@
 Building Magic: the Gathering Drafting Bots
 ========================================
 
-This repository contains code for building and evaluating MTG drafting bots as discussed in our paper "AI solutions for drafting in Magic: the Gathering".
+This repository contains code for building and evaluating MTG drafting bots as discussed in our paper "AI solutions for drafting in Magic: the Gathering."
 
 ![Visual profiles of 4 MtG sets](bots/output_files/all_footprints.svg)
 
