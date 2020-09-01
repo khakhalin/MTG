@@ -1,7 +1,9 @@
 Building Magic: the Gathering Drafting Bots
 ========================================
 
-This repository contains code for building and evaluating MTG drafting bots as discussed in our paper "AI solutions for drafting in Magic: the Gathering." 
+This repository contains code for building and evaluating MTG drafting bots as discussed in our paper "AI solutions for drafting in Magic: the Gathering".
+
+![Visual profiles of 4 MtG sets](bots\output_files\all_footprints.svg)
 
 All drafting bot code is contained in the *bots* folder. Most scripts take as input simulated MTG drafts collected from [Draftsim.com](http://draftsim.com). This data is licensed under a CC BY 4.0 International license and is downloadable [here](https://draftsim.com/draft-data/).
 
@@ -35,6 +37,8 @@ To make and evaluate new drafting bots, we recommend following the process outli
 
 ## Media
 
+![rotating cube](https://draftsim.com/wp-content/uploads/2018/08/rotating-m19-cube.gif)
+
 In addition to Ward et al. (2020), we also published several blog posts that dig deep into exploratory analyses of Draftsim data. 
 
 1. [Basic analysis](https://draftsim.com/blog/draft-data-analysis/): introduces co-drafting distances and MDS scaling.
@@ -54,5 +58,3 @@ Code commentaries:
 ## About Us
 
 The project is supported by a small team of people: Arseny Khakhalin, Bobby Mills, Dan Troha, Daniel Brooks, and Henry Ward. Feel free to reach out to us with any questions or comments.  
-
-![rotating cube](https://draftsim.com/wp-content/uploads/2018/08/rotating-m19-cube.gif)
