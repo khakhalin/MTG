@@ -37,8 +37,6 @@ To make and evaluate new drafting bots, we recommend following the process outli
 
 ## Media
 
-![rotating cube](https://draftsim.com/wp-content/uploads/2018/08/rotating-m19-cube.gif)
-
 In addition to Ward et al. (2020), we also published several blog posts that dig deep into exploratory analyses of Draftsim data. 
 
 1. [Basic analysis](https://draftsim.com/blog/draft-data-analysis/): introduces co-drafting distances and MDS scaling.
@@ -46,6 +44,8 @@ In addition to Ward et al. (2020), we also published several blog posts that dig
 3. [Controversial cards](https://draftsim.com/blog/guilds-of-ravnica-first-look/): discusses cards that are loved by some people, but disliked by others (original idea by Bobby Mills). This analysis turned to be rather fancy, as we ran into a couple of mathematical paradoxes.
 4. [Color wheel](https://draftsim.com/blog/ravnica-allegiance-first-look/): similar analyses as the above for guild-based blocks (GRN and RNA).
 5. [Eldraine bot](https://draftsim.com/ryan-saxe-bot-model/): Ryan Saxe's bot presents a very cool offshoot of this project. 
+
+![rotating cube](https://draftsim.com/wp-content/uploads/2018/08/rotating-m19-cube.gif)
 
 ## Other scripts
 
