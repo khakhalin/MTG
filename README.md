@@ -1,11 +1,11 @@
 Building Magic: the Gathering Drafting Bots
 ========================================
 
-This repository contains code for building and evaluating MTG drafting bots as discussed in our paper "AI solutions for drafting in Magic: the Gathering."
+This repository contains code for building and evaluating MTG drafting bots, discussed in our recent paper: "**AI solutions for drafting in Magic: the Gathering**" by Henry N. Ward, Daniel J. Brooks, Dan Troha, Bobby Mills, and Arseny S. Khakhalin (2020). https://arxiv.org/abs/2009.00655
 
 ![Visual profiles of 4 MtG sets](bots/output_files/all_footprints.svg)
 
-All drafting bot code is contained in the *bots* folder. Most scripts take as input simulated MTG drafts collected from [Draftsim.com](http://draftsim.com). This data is licensed under a CC BY 4.0 International license and is downloadable [here](https://draftsim.com/draft-data/).
+All code for drafting bots can be found in the *bots* folder. Most scripts take MTG drafts collected from [Draftsim.com](http://draftsim.com) as an input. The data is licensed under a CC BY 4.0 International license and is downloadable [here](https://draftsim.com/draft-data/).
 
 To introduce each major folder and script:
 
