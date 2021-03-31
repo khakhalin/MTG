@@ -47,6 +47,10 @@ In addition to Ward et al. (2020), we also published several blog posts that dig
 
 ![rotating cube](https://draftsim.com/wp-content/uploads/2018/08/rotating-m19-cube.gif)
 
+## Raw data
+
+Raw data used in this project (for the M19 MtG set) is available here: https://draftsim.com/draft-data/
+
 ## Other scripts
 
 In addition to drafting bot code, the *archive* folder contains miscellaneous scripts for visualizing and analyzing Draftsim data. 
